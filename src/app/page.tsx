@@ -1,65 +1,142 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import GroupCard from "@/components/groups/GroupCard";
+import CreateGroupForm from "@/components/groups/CreateGroupForm";
+
+interface GroupMember {
+  user_id: string;
+}
+
+interface Group {
+  id: string;
+  name: string;
+  type: "pg" | "hostel" | "trip";
+  members: GroupMember[];
+}
+
+export default function Dashboard() {
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+
+  const fetchGroups = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/groups?userId=user-1");
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to fetch groups");
+      }
+      const data = await res.json();
+      setGroups(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="flex min-h-full flex-col">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 sm:px-6">
+        {/* Welcome header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Your Groups</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage expenses, track balances, and settle up with one tap.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Error */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+            <button onClick={fetchGroups} className="ml-2 font-medium underline">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-32 animate-pulse rounded-xl border border-gray-200 bg-gray-50"
+              />
+            ))}
+          </div>
+        ) : groups.length === 0 ? (
+          /* Empty state */
+          <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 py-20 text-center">
+            <svg className="mb-4 h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            <h2 className="text-lg font-semibold text-gray-700">No groups yet</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Create a group to start splitting expenses
+            </p>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="mt-6 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+            >
+              Create Your First Group
+            </button>
+          </div>
+        ) : (
+          /* Group Grid */
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {groups.map((g) => (
+              <GroupCard
+                key={g.id}
+                id={g.id}
+                name={g.name}
+                type={g.type}
+                memberCount={g.members.length}
+              />
+            ))}
+
+            {/* Create card */}
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-5 text-sm font-medium text-gray-500 transition-colors hover:border-indigo-400 hover:text-indigo-600"
+            >
+              <div className="flex flex-col items-center gap-2">
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span>Create Group</span>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Floating action button (mobile) */}
+        {groups.length > 0 && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg transition-colors hover:bg-indigo-700 sm:hidden"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      <CreateGroupForm
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={fetchGroups}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import NavBar from "@/components/ui/NavBar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Splitup",
-  description: "Expense splitting for group living — settle with one tap via UPI",
+  description:
+    "Expense splitting for group living — settle with one tap via UPI",
   manifest: "/manifest.json",
 };
 
@@ -31,7 +33,10 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#6366f1" />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full bg-gray-50 font-sans text-gray-900">
+        <NavBar />
+        <main className="flex-1">{children}</main>
+      </body>
     </html>
   );
 }

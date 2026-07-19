@@ -17,8 +17,17 @@ interface Store {
 // Singleton in-memory store
 // ---------------------------------------------------------------------------
 
+// ponytail: seed a mock user so the app works without auth
+const MOCK_USER: User = {
+  id: 'user-1',
+  phone: '+919999999999',
+  name: 'You',
+  default_vpa: 'you@upi',
+  created_at: new Date().toISOString(),
+};
+
 const store: Store = {
-  users: [],
+  users: [MOCK_USER],
   groups: [],
   groupMembers: [],
   expenses: [],
