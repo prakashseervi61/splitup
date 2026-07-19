@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { getUserName } from "@/lib/user-cache";
+import { getUserName, getUserVpa } from "@/lib/user-cache";
+import QrCode from "@/components/ui/QrCode";
+import { generateUpiLink } from "@/lib/upi/generate-link";
 
 interface Settlement {
   id: string;
@@ -34,6 +36,7 @@ function formatDate(iso: string) {
 
 export default function SettlementList({ settlements, loading, error, groupId, onRefresh }: SettlementListProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [qrSettlement, setQrSettlement] = useState<string | null>(null);
 
   const updateStatus = async (settlementId: string, status: "confirmed" | "disputed") => {
     setActionLoading(settlementId);
@@ -121,21 +124,76 @@ export default function SettlementList({ settlements, loading, error, groupId, o
               </div>
 
               {s.status === "pending" && (
-                <div className="mt-3 flex gap-2 border-t border-gray-100 pt-3">
-                  <button
-                    onClick={() => updateStatus(s.id, "confirmed")}
-                    disabled={actionLoading === s.id}
-                    className="flex-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-                  >
-                    {actionLoading === s.id ? "..." : "Confirm"}
-                  </button>
-                  <button
-                    onClick={() => updateStatus(s.id, "disputed")}
-                    disabled={actionLoading === s.id}
-                    className="flex-1 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
-                  >
-                    Dispute
-                  </button>
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+                  {/* UPI section — show when current user is the payer */}
+                  {(() => {
+                    const vpa = getUserVpa(s.to_user);
+                    if (!vpa) return null;
+                    return (
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => {
+                            const link = generateUpiLink({
+                              vpa,
+                              amount: s.amount,
+                              name: getUserName(s.to_user),
+                              note: `Settle: ${getUserName(s.from_user)}`,
+                              transactionRef: s.id.slice(0, 35),
+                            });
+                            window.location.href = link;
+                          }}
+                          className="w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700"
+                        >
+                          Pay via UPI
+                        </button>
+                        <button
+                          onClick={() =>
+                            setQrSettlement(
+                              qrSettlement === s.id ? null : s.id,
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                        >
+                          {qrSettlement === s.id
+                            ? "Hide QR"
+                            : "Show QR Code"}
+                        </button>
+                        {qrSettlement === s.id && (
+                          <div className="py-2">
+                            <QrCode
+                              data={generateUpiLink({
+                                vpa,
+                                amount: s.amount,
+                                name: getUserName(s.to_user),
+                                note: `Settle: ${getUserName(s.from_user)}`,
+                              })}
+                              size={160}
+                            />
+                            <p className="mt-1 text-center text-[10px] text-gray-400">
+                              Scan with any UPI app
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => updateStatus(s.id, "confirmed")}
+                      disabled={actionLoading === s.id}
+                      className="flex-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {actionLoading === s.id ? "..." : "Confirm"}
+                    </button>
+                    <button
+                      onClick={() => updateStatus(s.id, "disputed")}
+                      disabled={actionLoading === s.id}
+                      className="flex-1 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                    >
+                      Dispute
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

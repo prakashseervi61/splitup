@@ -168,25 +168,6 @@ export default function GroupDetailPage() {
     else if (activeTab === "settlements") fetchSettlements();
   }, [activeTab, fetchExpenses, fetchBalances, fetchSettlements]);
 
-  const handleSettle = async (from: string, to: string, amount: number) => {
-    try {
-      const res = await fetch(`/api/groups/${groupId}/settlements`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ from_user: from, to_user: to, amount }),
-      });
-      if (!res.ok) {
-        const d = await res.json();
-        alert(d.error || "Failed to create settlement");
-        return;
-      }
-      fetchBalances();
-      fetchSettlements();
-    } catch {
-      alert("Network error");
-    }
-  };
-
   if (pageLoading) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
@@ -296,7 +277,10 @@ export default function GroupDetailPage() {
             error={balancesError}
             groupId={groupId}
             members={members}
-            onSettle={handleSettle}
+            onRefresh={() => {
+              fetchBalances();
+              fetchSettlements();
+            }}
           />
         )}
 

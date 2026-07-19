@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { getUserName } from "@/lib/user-cache";
+import { getUserName, getUserVpa } from "@/lib/user-cache";
+import SettleFlow from "@/components/settlements/SettleFlow";
 
 interface SimplifiedDebt {
   from: string;
@@ -16,7 +17,7 @@ interface BalanceSheetProps {
   error: string;
   groupId: string;
   members: { user_id: string }[];
-  onSettle: (from: string, to: string, amount: number) => void;
+  onRefresh?: () => void;
 }
 
 export default function BalanceSheet({
@@ -24,10 +25,16 @@ export default function BalanceSheet({
   simplified,
   loading,
   error,
+  groupId,
   members,
-  onSettle,
+  onRefresh,
 }: BalanceSheetProps) {
   const [showSimplified, setShowSimplified] = useState(true);
+  const [settleTarget, setSettleTarget] = useState<{
+    from: string;
+    to: string;
+    amount: number;
+  } | null>(null);
 
   const sortedMembers = [...members].sort((a, b) => {
     const ba = balances[a.user_id] ?? 0;
@@ -110,7 +117,13 @@ export default function BalanceSheet({
                         ₹{debt.amount.toFixed(2)}
                       </span>
                       <button
-                        onClick={() => onSettle(debt.from, debt.to, debt.amount)}
+                        onClick={() =>
+                          setSettleTarget({
+                            from: debt.from,
+                            to: debt.to,
+                            amount: debt.amount,
+                          })
+                        }
                         className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700"
                       >
                         Settle Up
@@ -131,6 +144,24 @@ export default function BalanceSheet({
           </svg>
           <p className="text-sm text-gray-500">All settled up!</p>
         </div>
+      )}
+
+      {settleTarget && (
+        <SettleFlow
+          open={!!settleTarget}
+          onClose={() => setSettleTarget(null)}
+          from={settleTarget.from}
+          fromName={getUserName(settleTarget.from)}
+          to={settleTarget.to}
+          toName={getUserName(settleTarget.to)}
+          vpa={getUserVpa(settleTarget.to)}
+          amount={settleTarget.amount}
+          groupId={groupId}
+          onComplete={() => {
+            setSettleTarget(null);
+            onRefresh?.();
+          }}
+        />
       )}
     </div>
   );
