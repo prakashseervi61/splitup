@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import QrCode from "@/components/ui/QrCode";
 import { generateUpiLink } from "@/lib/upi/generate-link";
@@ -45,6 +45,13 @@ export default function SettleFlow({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [counterDisplay, setCounterDisplay] = useState(amount);
+  const counterRef = useRef<number>(amount);
+  const flashRef = useRef<HTMLDivElement>(null);
+
+  // ponytail: global lock, per-account locks if throughput matters
+  const animatingRef = useRef(false);
+
   const reset = () => {
     setStep("initiate");
     setSettlementId(null);
@@ -52,6 +59,9 @@ export default function SettleFlow({
     setShowQr(false);
     setLoading(false);
     setError("");
+    setCounterDisplay(amount);
+    counterRef.current = amount;
+    animatingRef.current = false;
   };
 
   const handleClose = () => {
@@ -101,12 +111,15 @@ export default function SettleFlow({
     }
   };
 
-  // Step 2 — confirm payment
+  // Step 2 — confirm payment with settle ripple animation
   const handleConfirmPayment = async () => {
     if (!settlementId) return;
     if (!window.confirm(`Did you pay ₹${amount.toFixed(2)} to ${toName}?`)) {
       return;
     }
+
+    if (animatingRef.current) return;
+    animatingRef.current = true;
 
     setLoading(true);
     setError("");
@@ -123,11 +136,43 @@ export default function SettleFlow({
         const d = await res.json();
         throw new Error(d.error || "Failed to confirm settlement");
       }
+
       setStatus("confirmed");
-      setStep("done");
-      onComplete();
+
+      // Phase 2: green flash sweep
+      if (flashRef.current) {
+        flashRef.current.style.transform = "translateX(100%)";
+        flashRef.current.style.transition = "transform 0.4s ease-out";
+      }
+
+      // Phase 2: counter animation via requestAnimationFrame
+      const startVal = amount;
+      const duration = 400; // ms
+      const startTime = performance.now();
+
+      const animateCounter = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // ease-out quad
+        const eased = 1 - (1 - progress) * (1 - progress);
+        const current = startVal * (1 - eased);
+        setCounterDisplay(current);
+        counterRef.current = current;
+
+        if (progress < 1) {
+          requestAnimationFrame(animateCounter);
+        } else {
+          setCounterDisplay(0);
+          setStep("done");
+          onComplete();
+          animatingRef.current = false;
+        }
+      };
+
+      requestAnimationFrame(animateCounter);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to confirm");
+      animatingRef.current = false;
     } finally {
       setLoading(false);
     }
@@ -137,17 +182,17 @@ export default function SettleFlow({
     <Modal open={open} onClose={handleClose} title="Settle Up">
       {step === "initiate" && (
         <div className="space-y-5">
-          <div className="rounded-xl bg-gray-50 p-4 text-center">
-            <p className="text-xs text-gray-500">Amount</p>
-            <p className="text-3xl font-bold text-gray-900">
+          <div className="rounded-xl bg-surface-secondary p-4 text-center">
+            <p className="text-xs text-text-muted">Amount</p>
+            <p className="text-4xl font-bold text-text-heading" style={{ fontVariantNumeric: "tabular-nums" }}>
               ₹{amount.toFixed(2)}
             </p>
           </div>
 
           <div className="flex items-center justify-center gap-3 text-sm">
-            <span className="font-medium text-gray-700">{fromName}</span>
+            <span className="font-medium text-text-body">{fromName}</span>
             <svg
-              className="h-5 w-5 text-gray-400"
+              className="h-5 w-5 text-text-muted"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -159,18 +204,18 @@ export default function SettleFlow({
                 d="M17 8l4 4m0 0l-4 4m4-4H3"
               />
             </svg>
-            <span className="font-medium text-gray-700">{toName}</span>
+            <span className="font-medium text-text-body">{toName}</span>
           </div>
 
           {vpa && (
-            <div className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-center text-sm">
-              <span className="text-gray-500">Pay to VPA: </span>
-              <span className="font-mono font-medium text-gray-800">{vpa}</span>
+            <div className="rounded-lg border border-border bg-surface px-4 py-2 text-center text-sm">
+              <span className="text-text-muted">Pay to VPA: </span>
+              <span className="font-mono font-medium text-text-heading">{vpa}</span>
             </div>
           )}
 
           {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-danger">
               {error}
             </p>
           )}
@@ -181,19 +226,19 @@ export default function SettleFlow({
                 <button
                   onClick={handlePayViaUpi}
                   disabled={loading}
-                  className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                  className="animate-settle-ripple w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
                 >
                   {loading ? "Creating..." : "Pay via UPI"}
                 </button>
                 <button
                   onClick={() => setShowQr(!showQr)}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                  className="w-full rounded-xl border border-border px-4 py-2 text-sm font-medium text-text-body transition-colors hover:bg-surface-secondary"
                 >
                   {showQr ? "Hide QR Code" : "Show QR Code"}
                 </button>
               </>
             ) : (
-              <p className="text-center text-sm text-gray-400">
+              <p className="text-center text-sm text-text-muted">
                 No UPI ID available for {toName}
               </p>
             )}
@@ -210,7 +255,7 @@ export default function SettleFlow({
                 })}
                 size={180}
               />
-              <p className="mt-2 text-center text-xs text-gray-400">
+              <p className="mt-2 text-center text-xs text-text-muted">
                 Scan with any UPI app
               </p>
             </div>
@@ -220,12 +265,18 @@ export default function SettleFlow({
 
       {step === "confirm" && (
         <div className="space-y-5">
-          <div className="rounded-xl bg-blue-50 p-4 text-center">
-            <p className="text-xs text-blue-500">Payment Initiated</p>
-            <p className="mt-1 text-xl font-semibold text-gray-900">
-              ₹{amount.toFixed(2)}
+          <div className="relative overflow-hidden rounded-xl bg-primary-subtle p-4 text-center">
+            {/* Green flash sweep element */}
+            <div
+              ref={flashRef}
+              className="absolute inset-0 bg-success/20"
+              style={{ transform: "translateX(-100%)" }}
+            />
+            <p className="relative text-xs text-primary">Payment Initiated</p>
+            <p className="relative mt-1 text-xl font-semibold text-text-heading" style={{ fontVariantNumeric: "tabular-nums" }}>
+              ₹{counterDisplay.toFixed(2)}
             </p>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="relative mt-1 text-sm text-text-body">
               {fromName} → {toName}
             </p>
           </div>
@@ -233,7 +284,7 @@ export default function SettleFlow({
           {vpa && (
             <button
               onClick={() => setShowQr(!showQr)}
-              className="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+              className="w-full rounded-xl border border-border px-4 py-2 text-sm font-medium text-text-body transition-colors hover:bg-surface-secondary"
             >
               {showQr ? "Hide QR" : "Show QR Code (scan from another device)"}
             </button>
@@ -252,7 +303,7 @@ export default function SettleFlow({
           )}
 
           {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-danger">
               {error}
             </p>
           )}
@@ -260,9 +311,9 @@ export default function SettleFlow({
           <button
             onClick={handleConfirmPayment}
             disabled={loading}
-            className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+            className="animate-settle-ripple w-full rounded-xl bg-success px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
           >
-            {loading ? "Confirming..." : "I've Paid"}
+            {loading ? "✓" : "I've Paid"}
           </button>
         </div>
       )}
@@ -270,9 +321,9 @@ export default function SettleFlow({
       {step === "done" && (
         <div className="space-y-5 text-center">
           {status === "confirmed" ? (
-            <div className="rounded-xl bg-emerald-50 p-6">
+            <div className="rounded-xl bg-green-50 p-6">
               <svg
-                className="mx-auto h-12 w-12 text-emerald-500"
+                className="mx-auto h-12 w-12 text-success"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -284,16 +335,16 @@ export default function SettleFlow({
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <p className="mt-3 text-lg font-semibold text-emerald-800">
+              <p className="mt-3 text-lg font-semibold text-success">
                 Payment Confirmed
               </p>
-              <p className="mt-1 text-sm text-emerald-600">
+              <p className="mt-1 text-sm text-green-600">
                 ₹{amount.toFixed(2)} paid to {toName}
               </p>
             </div>
           ) : (
             <div className="rounded-xl bg-amber-50 p-6">
-              <p className="text-lg font-semibold text-amber-800">
+              <p className="text-lg font-semibold text-warning">
                 Payment Pending
               </p>
               <p className="mt-1 text-sm text-amber-600">
@@ -304,7 +355,7 @@ export default function SettleFlow({
 
           <button
             onClick={handleClose}
-            className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+            className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
           >
             Done
           </button>

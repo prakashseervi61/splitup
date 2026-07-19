@@ -64,8 +64,8 @@ export default function Dashboard() {
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 sm:px-6">
         {/* Welcome header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Your Groups</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-text-heading">Your Groups</h1>
+          <p className="mt-1 text-sm text-text-muted">
             Manage expenses, track balances, and settle up with one tap.
           </p>
         </div>
@@ -86,23 +86,23 @@ export default function Dashboard() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-32 animate-pulse rounded-xl border border-gray-200 bg-gray-50"
+                className="h-32 animate-pulse rounded-xl border border-border bg-surface-secondary"
               />
             ))}
           </div>
         ) : groups.length === 0 ? (
           /* Empty state */
-          <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 py-20 text-center">
-            <svg className="mb-4 h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+          <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-divider py-20 text-center">
+            <svg className="mb-4 h-16 w-16 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
-            <h2 className="text-lg font-semibold text-gray-700">No groups yet</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-lg font-semibold text-text-body">No groups yet</h2>
+            <p className="mt-1 text-sm text-text-muted">
               Create a group to start splitting expenses
             </p>
             <button
               onClick={() => setShowCreate(true)}
-              className="mt-6 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+              className="mt-6 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
             >
               Create Your First Group
             </button>
@@ -123,7 +123,7 @@ export default function Dashboard() {
             {/* Create card */}
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-5 text-sm font-medium text-gray-500 transition-colors hover:border-indigo-400 hover:text-indigo-600"
+              className="flex items-center justify-center rounded-xl border-2 border-dashed border-border p-5 text-sm font-medium text-text-muted transition-colors hover:border-primary hover:text-primary"
             >
               <div className="flex flex-col items-center gap-2">
                 <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -139,7 +139,7 @@ export default function Dashboard() {
         {groups.length > 0 && (
           <button
             onClick={() => setShowCreate(true)}
-            className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg transition-colors hover:bg-indigo-700 sm:hidden"
+            className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-colors hover:bg-primary-dark sm:hidden"
           >
             <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

@@ -4,8 +4,8 @@
   "description": "Expense splitting for group living — settle with one tap via UPI",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#6366f1",
+  "background_color": "#F4F6F8",
+  "theme_color": "#087B6E",
   "icons": [
     {
       "src": "/icons/icon-192.png",

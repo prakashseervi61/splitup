@@ -104,7 +104,7 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Group Name */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-text-body">
             Group Name
           </label>
           <input
@@ -112,13 +112,13 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Sunshine PG"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
           />
         </div>
 
         {/* Group Type */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-text-body">
             Group Type
           </label>
           <div className="flex gap-2">
@@ -129,8 +129,8 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
                 onClick={() => setType(t)}
                 className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium capitalize transition-colors ${
                   type === t
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                    : "border-gray-300 text-gray-600 hover:border-gray-400"
+                    ? "border-primary bg-primary-subtle text-primary"
+                    : "border-border text-text-body hover:border-divider"
                 }`}
               >
                 {t}
@@ -141,20 +141,20 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
 
         {/* Members */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-text-body">
             Members
           </label>
           <div className="mb-2 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary-subtle px-2.5 py-1 text-xs font-medium text-primary">
               You
             </span>
             {memberNames.map((n) => (
               <span
                 key={n}
-                className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
+                className="inline-flex items-center gap-1 rounded-full bg-surface-secondary px-2.5 py-1 text-xs font-medium text-text-body"
               >
                 {n}
-                <button type="button" onClick={() => removeMember(n)} className="text-gray-400 hover:text-gray-600">
+                <button type="button" onClick={() => removeMember(n)} className="text-text-muted hover:text-text-body">
                   <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -169,13 +169,13 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
               onChange={(e) => setNewMemberName(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addMember(); } }}
               placeholder="Enter member name"
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="flex-1 rounded-lg border border-border px-3 py-2 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <button
               type="button"
               onClick={addMember}
               disabled={!newMemberName.trim()}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-40"
+              className="rounded-lg border border-border px-3 py-2 text-sm text-text-body transition-colors hover:bg-surface-secondary disabled:opacity-40"
             >
               Add
             </button>
@@ -190,14 +190,14 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
           <button
             type="button"
             onClick={() => { reset(); onClose(); }}
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-body transition-colors hover:bg-surface-secondary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
           >
             {submitting ? "Creating..." : "Create Group"}
           </button>

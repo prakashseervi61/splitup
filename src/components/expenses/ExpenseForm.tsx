@@ -135,19 +135,19 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Description */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Description</label>
+          <label className="mb-1 block text-sm font-medium text-text-body">Description</label>
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g., Dinner at Pind"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           />
         </div>
 
         {/* Amount */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Amount (₹)</label>
+          <label className="mb-1 block text-sm font-medium text-text-body">Amount (₹)</label>
           <input
             type="number"
             step="0.01"
@@ -155,17 +155,17 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           />
         </div>
 
         {/* Category */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Category</label>
+          <label className="mb-1 block text-sm font-medium text-text-body">Category</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -175,11 +175,11 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
 
         {/* Paid By */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Paid By</label>
+          <label className="mb-1 block text-sm font-medium text-text-body">Paid By</label>
           <select
             value={paidBy}
             onChange={(e) => setPaidBy(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           >
             {members.map((m) => (
               <option key={m.user_id} value={m.user_id}>
@@ -191,7 +191,7 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
 
         {/* Split Method */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Split Method</label>
+          <label className="mb-1 block text-sm font-medium text-text-body">Split Method</label>
           <div className="flex gap-2">
             {(["equal", "custom", "percentage"] as const).map((m) => (
               <button
@@ -200,8 +200,8 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
                 onClick={() => setSplitMethod(m)}
                 className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
                   splitMethod === m
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                    : "border-gray-300 text-gray-600 hover:border-gray-400"
+                    ? "border-primary bg-primary-subtle text-primary"
+                    : "border-border text-text-body hover:border-divider"
                 }`}
               >
                 {m}
@@ -212,10 +212,10 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
 
         {/* Members with split inputs */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-text-body">
             Split Among
           </label>
-          <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-gray-200 p-2">
+          <div className="max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
             {members.map((m) => {
               const name = getUserName(m.user_id);
               const selected = selectedMembers[m.user_id];
@@ -223,19 +223,19 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
                 <label
                   key={m.user_id}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                    selected ? "bg-indigo-50" : "hover:bg-gray-50"
+                    selected ? "bg-primary-subtle" : "hover:bg-surface-secondary"
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={selected}
                     onChange={() => toggleMember(m.user_id)}
-                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                   />
-                  <span className="flex-1 font-medium text-gray-700">{name}</span>
+                  <span className="flex-1 font-medium text-text-body">{name}</span>
                   {splitMethod === "custom" && selected && (
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-400">₹</span>
+                      <span className="text-xs text-text-muted">₹</span>
                       <input
                         type="number"
                         step="0.01"
@@ -245,7 +245,7 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
                           setCustomShares((p) => ({ ...p, [m.user_id]: e.target.value }))
                         }
                         placeholder="0"
-                        className="w-20 rounded border border-gray-300 px-2 py-1 text-xs outline-none focus:border-indigo-500"
+                        className="w-20 rounded border border-border px-2 py-1 text-xs outline-none focus:border-primary"
                       />
                     </div>
                   )}
@@ -261,9 +261,9 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
                           setPercentages((p) => ({ ...p, [m.user_id]: e.target.value }))
                         }
                         placeholder="0"
-                        className="w-16 rounded border border-gray-300 px-2 py-1 text-xs outline-none focus:border-indigo-500"
+                        className="w-16 rounded border border-border px-2 py-1 text-xs outline-none focus:border-primary"
                       />
-                      <span className="text-xs text-gray-400">%</span>
+                      <span className="text-xs text-text-muted">%</span>
                     </div>
                   )}
                 </label>
@@ -280,14 +280,14 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-body transition-colors hover:bg-surface-secondary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+            className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
           >
             {submitting ? "Adding..." : "Add Expense"}
           </button>

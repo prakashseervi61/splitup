@@ -24,7 +24,7 @@ export default function QrCode({ data, size = 200 }: QrCodeProps) {
       ref={canvasRef}
       width={size}
       height={size}
-      className="mx-auto rounded-lg border border-gray-200"
+      className="mx-auto rounded-lg border border-border"
     />
   );
 }

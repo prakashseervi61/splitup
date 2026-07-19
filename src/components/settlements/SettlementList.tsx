@@ -24,9 +24,9 @@ interface SettlementListProps {
 }
 
 const statusConfig = {
-  pending: { label: "Pending", color: "bg-amber-100 text-amber-700" },
-  confirmed: { label: "Confirmed", color: "bg-emerald-100 text-emerald-700" },
-  disputed: { label: "Disputed", color: "bg-red-100 text-red-700" },
+  pending: { label: "Pending", color: "bg-amber-50 text-warning" },
+  confirmed: { label: "Confirmed", color: "bg-green-50 text-success" },
+  disputed: { label: "Disputed", color: "bg-red-50 text-danger" },
 };
 
 function formatDate(iso: string) {
@@ -59,7 +59,7 @@ export default function SettlementList({ settlements, loading, error, groupId, o
   };
 
   if (loading) {
-    return <div className="py-8 text-center text-sm text-gray-400">Loading settlements...</div>;
+    return <div className="py-8 text-center text-sm text-text-muted">Loading settlements...</div>;
   }
 
   if (error) {
@@ -68,18 +68,18 @@ export default function SettlementList({ settlements, loading, error, groupId, o
 
   if (settlements.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-300 py-12 text-center">
-        <svg className="mx-auto mb-3 h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+      <div className="rounded-xl border border-dashed border-divider py-12 text-center">
+        <svg className="mx-auto mb-3 h-10 w-10 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
-        <p className="text-sm text-gray-500">No settlements yet</p>
+        <p className="text-sm text-text-muted">No settlements yet</p>
       </div>
     );
   }
 
   return (
     <div>
-      <h3 className="mb-3 text-lg font-semibold text-gray-900">Settlements</h3>
+      <h3 className="mb-3 text-lg font-semibold text-text-heading">Settlements</h3>
       <div className="space-y-2">
         {settlements.map((s) => {
           const st = statusConfig[s.status];
@@ -88,33 +88,33 @@ export default function SettlementList({ settlements, loading, error, groupId, o
               key={s.id}
               className={`rounded-xl border px-4 py-3 shadow-sm ${
                 s.status === "pending"
-                  ? "border-gray-100 bg-white"
+                  ? "border-border bg-surface"
                   : s.status === "confirmed"
-                    ? "border-emerald-100 bg-emerald-50/40"
-                    : "border-red-100 bg-red-50/40"
+                    ? "border-green-200 bg-green-50/40"
+                    : "border-red-200 bg-red-50/40"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-text-heading">
                       {getUserName(s.from_user)}
                     </span>
-                    <svg className="h-4 w-4 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-4 w-4 flex-shrink-0 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-text-heading">
                       {getUserName(s.to_user)}
                     </span>
                   </div>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                  <div className="mt-1 flex items-center gap-2 text-xs text-text-muted">
                     <span>{formatDate(s.created_at)}</span>
                     {s.note && <><span>·</span><span className="truncate">{s.note}</span></>}
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-2">
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm font-semibold text-text-heading">
                     ₹{s.amount.toFixed(2)}
                   </span>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${st.color}`}>
@@ -124,7 +124,7 @@ export default function SettlementList({ settlements, loading, error, groupId, o
               </div>
 
               {s.status === "pending" && (
-                <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
+                <div className="mt-3 space-y-2 border-t border-border pt-3">
                   {/* UPI section — show when current user is the payer */}
                   {(() => {
                     const vpa = getUserVpa(s.to_user);
@@ -142,7 +142,7 @@ export default function SettlementList({ settlements, loading, error, groupId, o
                             });
                             window.location.href = link;
                           }}
-                          className="w-full rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700"
+                          className="w-full rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-dark"
                         >
                           Pay via UPI
                         </button>
@@ -152,7 +152,7 @@ export default function SettlementList({ settlements, loading, error, groupId, o
                               qrSettlement === s.id ? null : s.id,
                             )
                           }
-                          className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                          className="w-full rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary"
                         >
                           {qrSettlement === s.id
                             ? "Hide QR"
@@ -169,7 +169,7 @@ export default function SettlementList({ settlements, loading, error, groupId, o
                               })}
                               size={160}
                             />
-                            <p className="mt-1 text-center text-[10px] text-gray-400">
+                            <p className="mt-1 text-center text-[10px] text-text-muted">
                               Scan with any UPI app
                             </p>
                           </div>
@@ -182,14 +182,14 @@ export default function SettlementList({ settlements, loading, error, groupId, o
                     <button
                       onClick={() => updateStatus(s.id, "confirmed")}
                       disabled={actionLoading === s.id}
-                      className="flex-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                      className="flex-1 rounded-lg bg-success px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                     >
                       {actionLoading === s.id ? "..." : "Confirm"}
                     </button>
                     <button
                       onClick={() => updateStatus(s.id, "disputed")}
                       disabled={actionLoading === s.id}
-                      className="flex-1 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                      className="flex-1 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-red-50 disabled:opacity-50"
                     >
                       Dispute
                     </button>

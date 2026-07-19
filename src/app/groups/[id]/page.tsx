@@ -55,9 +55,9 @@ interface SimplifiedDebt {
 }
 
 const typeConfig = {
-  pg: { label: "PG", color: "bg-blue-100 text-blue-700" },
-  hostel: { label: "Hostel", color: "bg-amber-100 text-amber-700" },
-  trip: { label: "Trip", color: "bg-emerald-100 text-emerald-700" },
+  pg: { label: "PG", color: "bg-primary-subtle text-primary" },
+  hostel: { label: "Hostel", color: "bg-amber-50 text-warning" },
+  trip: { label: "Trip", color: "bg-green-50 text-success" },
 };
 
 const tabs: { key: Tab; label: string }[] = [
@@ -177,9 +177,9 @@ export default function GroupDetailPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 w-48 rounded bg-gray-200" />
-          <div className="h-4 w-24 rounded bg-gray-200" />
-          <div className="mt-8 h-64 rounded-xl bg-gray-100" />
+          <div className="h-6 w-48 rounded bg-border" />
+          <div className="h-4 w-24 rounded bg-border" />
+          <div className="mt-8 h-64 rounded-xl bg-surface-secondary" />
         </div>
       </div>
     );
@@ -192,7 +192,7 @@ export default function GroupDetailPage() {
           <p className="text-red-700">{pageError || "Group not found"}</p>
           <Link
             href="/"
-            className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-800"
+            className="mt-4 inline-block text-sm font-medium text-primary hover:text-primary-dark"
           >
             ← Back to Dashboard
           </Link>
@@ -209,7 +209,7 @@ export default function GroupDetailPage() {
       {/* Back link */}
       <Link
         href="/"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-text-muted hover:text-text-body"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -220,7 +220,7 @@ export default function GroupDetailPage() {
       {/* Group Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">{group.name}</h1>
+          <h1 className="text-2xl font-bold text-text-heading">{group.name}</h1>
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${t.color}`}>
             {t.label}
           </span>
@@ -231,9 +231,9 @@ export default function GroupDetailPage() {
           {members.map((m) => (
             <span
               key={m.user_id}
-              className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
+              className="inline-flex items-center gap-1.5 rounded-full bg-surface-secondary px-3 py-1 text-xs font-medium text-text-body"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-200 text-[10px] font-bold text-indigo-700">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-subtle text-[10px] font-bold text-primary">
                 {getUserName(m.user_id).charAt(0).toUpperCase()}
               </span>
               {getUserName(m.user_id)}
@@ -243,7 +243,7 @@ export default function GroupDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
+      <div className="mb-6 border-b border-border">
         <div className="flex gap-6">
           {tabs.map((tab) => (
             <button
@@ -251,8 +251,8 @@ export default function GroupDetailPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-text-muted hover:text-text-body"
               }`}
             >
               {tab.label}
