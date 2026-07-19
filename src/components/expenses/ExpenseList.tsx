@@ -30,6 +30,7 @@ interface ExpenseListProps {
   groupId: string;
   members: Member[];
   onRefresh: () => void;
+  userId: string;
 }
 
 const categoryColors: Record<string, string> = {
@@ -48,7 +49,7 @@ function formatDate(iso: string) {
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
-export default function ExpenseList({ expenses, loading, error, groupId, members, onRefresh }: ExpenseListProps) {
+export default function ExpenseList({ expenses, loading, error, groupId, members, onRefresh, userId }: ExpenseListProps) {
   const [showForm, setShowForm] = useState(false);
 
   return (
@@ -112,6 +113,7 @@ export default function ExpenseList({ expenses, loading, error, groupId, members
         groupId={groupId}
         members={members}
         onCreated={onRefresh}
+        userId={userId}
       />
     </div>
   );

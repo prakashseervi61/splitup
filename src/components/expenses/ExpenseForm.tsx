@@ -14,6 +14,7 @@ interface ExpenseFormProps {
   groupId: string;
   members: Member[];
   onCreated: () => void;
+  userId: string;
 }
 
 type SplitMethod = "equal" | "custom" | "percentage";
@@ -29,11 +30,11 @@ const CATEGORIES = [
   "Other",
 ];
 
-export default function ExpenseForm({ open, onClose, groupId, members, onCreated }: ExpenseFormProps) {
+export default function ExpenseForm({ open, onClose, groupId, members, onCreated, userId }: ExpenseFormProps) {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Food");
-  const [paidBy, setPaidBy] = useState("user-1");
+  const [paidBy, setPaidBy] = useState(userId);
   const [splitMethod, setSplitMethod] = useState<SplitMethod>("equal");
   const [customShares, setCustomShares] = useState<Record<string, string>>({});
   const [percentages, setPercentages] = useState<Record<string, string>>({});

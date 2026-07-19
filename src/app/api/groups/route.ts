@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const creator = findUserById(created_by);
+    const creator = await findUserById(created_by);
     if (!creator) {
       return Response.json(
         { error: 'created_by user not found' },
@@ -42,16 +42,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const group = createGroup({ name, type, created_by });
+    const group = await createGroup({ name, type, created_by });
 
     // Add creator
-    addGroupMember(group.id, created_by);
+    await addGroupMember(group.id, created_by);
 
     // Add existing members by ID
     if (Array.isArray(members)) {
       for (const userId of members) {
         if (userId !== created_by) {
-          addGroupMember(group.id, userId);
+          await addGroupMember(group.id, userId);
         }
       }
     }
@@ -59,18 +59,18 @@ export async function POST(request: NextRequest) {
     // Create and add new members by phone
     if (Array.isArray(newMembers)) {
       for (const nm of newMembers) {
-        let user = nm.phone ? findUserByPhone(nm.phone) : undefined;
+        let user = nm.phone ? await findUserByPhone(nm.phone) : null;
         if (!user && nm.name && nm.phone) {
-          user = createUser({ phone: nm.phone, name: nm.name });
+          user = await createUser({ phone: nm.phone, name: nm.name });
         }
         if (user && user.id !== created_by) {
-          addGroupMember(group.id, user.id);
+          await addGroupMember(group.id, user.id);
         }
       }
     }
 
     return Response.json(
-      { ...group, members: getGroupMembers(group.id) },
+      { ...group, members: await getGroupMembers(group.id) },
       { status: 201 },
     );
   } catch (err) {
@@ -96,13 +96,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const groups = listUserGroups(userId);
+    const groups = await listUserGroups(userId);
 
     // Attach member info to each group
-    const result = groups.map((g) => ({
-      ...g,
-      members: getGroupMembers(g.id),
-    }));
+    const result = await Promise.all(
+      groups.map(async (g) => ({
+        ...g,
+        members: await getGroupMembers(g.id),
+      })),
+    );
 
     return Response.json(result);
   } catch (err) {

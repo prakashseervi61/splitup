@@ -31,7 +31,7 @@ export async function POST(
   try {
     const { id: groupId } = await params;
 
-    const group = getGroup(groupId);
+    const group = await getGroup(groupId);
     if (!group) {
       return Response.json({ error: 'Group not found' }, { status: 404 });
     }
@@ -73,7 +73,7 @@ export async function POST(
       );
     }
 
-    const members = getGroupMembers(groupId);
+    const members = await getGroupMembers(groupId);
     const memberIds = members.map((m) => m.user_id);
 
     // -- generate splits --
@@ -135,7 +135,7 @@ export async function POST(
     }
 
     // -- create expense --
-    const expense = createExpense({
+    const expense = await createExpense({
       group_id: groupId,
       paid_by,
       amount,
@@ -147,7 +147,7 @@ export async function POST(
 
     // -- create splits --
     for (const split of splits) {
-      createExpenseSplit({ ...split, expense_id: expense.id });
+      await createExpenseSplit({ ...split, expense_id: expense.id });
     }
 
     return Response.json(
@@ -175,17 +175,19 @@ export async function GET(
   try {
     const { id: groupId } = await params;
 
-    const group = getGroup(groupId);
+    const group = await getGroup(groupId);
     if (!group) {
       return Response.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    const expenses = getGroupExpenses(groupId);
+    const expenses = await getGroupExpenses(groupId);
 
-    const result = expenses.map((exp) => ({
-      ...exp,
-      splits: getExpenseSplits(exp.id),
-    }));
+    const result = await Promise.all(
+      expenses.map(async (exp) => ({
+        ...exp,
+        splits: await getExpenseSplits(exp.id),
+      })),
+    );
 
     return Response.json(result);
   } catch (err) {

@@ -20,12 +20,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
 
-  const fetchGroups = async () => {
+  const fetchGroups = async (userId: string) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/groups?userId=user-1");
+      const res = await fetch(`/api/groups?userId=${userId}`);
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Failed to fetch groups");
@@ -40,7 +41,22 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchGroups();
+    // Get current user from session
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((user) => {
+        if (user) {
+          setCurrentUser(user);
+          fetchGroups(user.id);
+        } else {
+          setError("Not authenticated");
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        setError("Failed to get current user");
+        setLoading(false);
+      });
   }, []);
 
   return (
@@ -58,7 +74,7 @@ export default function Dashboard() {
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
-            <button onClick={fetchGroups} className="ml-2 font-medium underline">
+            <button onClick={() => currentUser && fetchGroups(currentUser.id)} className="ml-2 font-medium underline">
               Retry
             </button>
           </div>
@@ -135,7 +151,8 @@ export default function Dashboard() {
       <CreateGroupForm
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        onCreated={fetchGroups}
+        onCreated={() => currentUser && fetchGroups(currentUser.id)}
+        userId={currentUser?.id ?? ""}
       />
     </div>
   );

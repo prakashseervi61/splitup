@@ -15,13 +15,13 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const group = getGroup(id);
+    const group = await getGroup(id);
     if (!group) {
       return Response.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    const members = getGroupMembers(id);
-    const balances = computeBalances(id);
+    const members = await getGroupMembers(id);
+    const balances = await computeBalances(id);
 
     return Response.json({
       ...group,

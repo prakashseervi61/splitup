@@ -16,7 +16,7 @@ export async function PATCH(
   try {
     const { id: groupId, settlementId } = await params;
 
-    const group = getGroup(groupId);
+    const group = await getGroup(groupId);
     if (!group) {
       return Response.json({ error: 'Group not found' }, { status: 404 });
     }
@@ -32,7 +32,7 @@ export async function PATCH(
     }
 
     // Verify settlement belongs to this group
-    const settlements = getGroupSettlements(groupId);
+    const settlements = await getGroupSettlements(groupId);
     const settlement = settlements.find((s) => s.id === settlementId);
     if (!settlement) {
       return Response.json(
@@ -41,7 +41,7 @@ export async function PATCH(
       );
     }
 
-    const updated = updateSettlementStatus(settlementId, status);
+    const updated = await updateSettlementStatus(settlementId, status);
     return Response.json(updated);
   } catch (err) {
     return Response.json(

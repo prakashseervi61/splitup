@@ -1,127 +1,200 @@
-import type { User, Group, GroupMember, Expense, ExpenseSplit, Settlement } from '@/types';
+import { createAdminClient } from '@/lib/supabase/server';
+import type {
+  User,
+  Group,
+  GroupMember,
+  Expense,
+  ExpenseSplit,
+  Settlement,
+} from '@/types';
+import { computeNetBalances } from '@/lib/utils/split';
 
 // ---------------------------------------------------------------------------
-// Types
+// Admin client — bypasses RLS, server-only
 // ---------------------------------------------------------------------------
 
-interface Store {
-  users: User[];
-  groups: Group[];
-  groupMembers: GroupMember[];
-  expenses: Expense[];
-  expenseSplits: ExpenseSplit[];
-  settlements: Settlement[];
+const supabase = createAdminClient();
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a DB row (numeric as string) to a typed number. */
+function toNum(v: unknown): number {
+  return typeof v === 'string' ? Number.parseFloat(v) : Number(v);
 }
 
-// ---------------------------------------------------------------------------
-// Singleton in-memory store
-// ---------------------------------------------------------------------------
+function toExpense(row: Record<string, unknown>): Expense {
+  return { ...row, amount: toNum(row.amount) } as unknown as Expense;
+}
 
-// ponytail: seed a mock user so the app works without auth
-const MOCK_USER: User = {
-  id: 'user-1',
-  phone: '+919999999999',
-  name: 'You',
-  default_vpa: 'you@upi',
-  created_at: new Date().toISOString(),
-};
+function toSplit(row: Record<string, unknown>): ExpenseSplit {
+  return { ...row, share_amount: toNum(row.share_amount) } as unknown as ExpenseSplit;
+}
 
-const store: Store = {
-  users: [MOCK_USER],
-  groups: [],
-  groupMembers: [],
-  expenses: [],
-  expenseSplits: [],
-  settlements: [],
-};
+function toSettlement(row: Record<string, unknown>): Settlement {
+  return {
+    ...row,
+    amount: toNum(row.amount),
+  } as unknown as Settlement;
+}
 
 // ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------
 
-export function findUserByPhone(phone: string): User | undefined {
-  return store.users.find((u) => u.phone === phone);
+export async function findUserByPhone(
+  phone: string,
+): Promise<User | null> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('phone', phone)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to find user: ${error.message}`);
+  return data as User | null;
 }
 
-export function findUserById(id: string): User | undefined {
-  return store.users.find((u) => u.id === id);
+export async function findUserById(id: string): Promise<User | null> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to find user: ${error.message}`);
+  return data as User | null;
 }
 
-export function createUser(data: {
+export async function createUser(data: {
+  id?: string;
   phone: string;
   name: string;
   default_vpa?: string;
-}): User {
-  const user: User = {
-    id: crypto.randomUUID(),
+}): Promise<User> {
+  const insertData: Record<string, unknown> = {
     phone: data.phone,
     name: data.name,
     default_vpa: data.default_vpa ?? '',
-    created_at: new Date().toISOString(),
   };
-  store.users.push(user);
-  return user;
+  if (data.id) insertData.id = data.id;
+
+  const { data: user, error } = await supabase
+    .from('users')
+    .insert(insertData)
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create user: ${error.message}`);
+  return user as User;
 }
 
 // ---------------------------------------------------------------------------
 // Groups
 // ---------------------------------------------------------------------------
 
-export function getGroup(id: string): Group | undefined {
-  return store.groups.find((g) => g.id === id);
+export async function getGroup(id: string): Promise<Group | null> {
+  const { data, error } = await supabase
+    .from('groups')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to get group: ${error.message}`);
+  return data as Group | null;
 }
 
-export function listUserGroups(userId: string): Group[] {
-  const groupIds = store.groupMembers
-    .filter((m) => m.user_id === userId)
-    .map((m) => m.group_id);
-  return store.groups.filter((g) => groupIds.includes(g.id));
+export async function listUserGroups(userId: string): Promise<Group[]> {
+  // Get group IDs the user belongs to
+  const { data: memberships, error: membershipError } = await supabase
+    .from('group_members')
+    .select('group_id')
+    .eq('user_id', userId);
+
+  if (membershipError)
+    throw new Error(`Failed to list groups: ${membershipError.message}`);
+
+  const groupIds = (memberships ?? []).map((m) => m.group_id);
+  if (groupIds.length === 0) return [];
+
+  // Fetch matching groups
+  const { data: groups, error: groupError } = await supabase
+    .from('groups')
+    .select('*')
+    .in('id', groupIds);
+
+  if (groupError)
+    throw new Error(`Failed to list groups: ${groupError.message}`);
+
+  return (groups ?? []) as Group[];
 }
 
-export function createGroup(data: {
+export async function createGroup(data: {
   name: string;
   type: 'pg' | 'hostel' | 'trip';
   created_by: string;
-}): Group {
-  const group: Group = {
-    id: crypto.randomUUID(),
-    name: data.name,
-    type: data.type,
-    created_by: data.created_by,
-    created_at: new Date().toISOString(),
-  };
-  store.groups.push(group);
-  return group;
+}): Promise<Group> {
+  const { data: group, error } = await supabase
+    .from('groups')
+    .insert({
+      name: data.name,
+      type: data.type,
+      created_by: data.created_by,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create group: ${error.message}`);
+  return group as Group;
 }
 
-export function addGroupMember(
+export async function addGroupMember(
   groupId: string,
   userId: string,
-): GroupMember {
-  const member: GroupMember = {
-    group_id: groupId,
-    user_id: userId,
-    joined_at: new Date().toISOString(),
-  };
-  store.groupMembers.push(member);
-  return member;
+): Promise<GroupMember> {
+  const { data, error } = await supabase
+    .from('group_members')
+    .insert({ group_id: groupId, user_id: userId })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to add group member: ${error.message}`);
+  return data as GroupMember;
 }
 
-export function getGroupMembers(groupId: string): GroupMember[] {
-  return store.groupMembers.filter((m) => m.group_id === groupId);
+export async function getGroupMembers(
+  groupId: string,
+): Promise<GroupMember[]> {
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('*')
+    .eq('group_id', groupId);
+
+  if (error) throw new Error(`Failed to get members: ${error.message}`);
+  return (data ?? []) as GroupMember[];
 }
 
-export function isGroupMember(groupId: string, userId: string): boolean {
-  return store.groupMembers.some(
-    (m) => m.group_id === groupId && m.user_id === userId,
-  );
+export async function isGroupMember(
+  groupId: string,
+  userId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('*')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to check membership: ${error.message}`);
+  return data !== null;
 }
 
 // ---------------------------------------------------------------------------
 // Expenses
 // ---------------------------------------------------------------------------
 
-export function createExpense(data: {
+export async function createExpense(data: {
   group_id: string;
   paid_by: string;
   amount: number;
@@ -129,127 +202,164 @@ export function createExpense(data: {
   category: string;
   is_recurring?: boolean;
   recurring_frequency?: 'monthly' | 'weekly' | 'daily';
-}): Expense {
-  const expense: Expense = {
-    id: crypto.randomUUID(),
-    group_id: data.group_id,
-    paid_by: data.paid_by,
-    amount: data.amount,
-    description: data.description,
-    category: data.category,
-    created_at: new Date().toISOString(),
-    is_recurring: data.is_recurring ?? false,
-    recurring_frequency: data.recurring_frequency,
-  };
-  store.expenses.push(expense);
-  return expense;
+}): Promise<Expense> {
+  const { data: expense, error } = await supabase
+    .from('expenses')
+    .insert({
+      group_id: data.group_id,
+      paid_by: data.paid_by,
+      amount: data.amount,
+      description: data.description ?? '',
+      category: data.category ?? '',
+      is_recurring: data.is_recurring ?? false,
+      recurring_frequency: data.recurring_frequency ?? null,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create expense: ${error.message}`);
+  return toExpense(expense as Record<string, unknown>);
 }
 
-export function getGroupExpenses(groupId: string): Expense[] {
-  return store.expenses.filter((e) => e.group_id === groupId);
+export async function getGroupExpenses(
+  groupId: string,
+): Promise<Expense[]> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to get expenses: ${error.message}`);
+  return (data ?? []).map((e) => toExpense(e as Record<string, unknown>));
 }
 
-export function getExpense(id: string): Expense | undefined {
-  return store.expenses.find((e) => e.id === id);
+export async function getExpense(id: string): Promise<Expense | null> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to get expense: ${error.message}`);
+  return data ? toExpense(data as Record<string, unknown>) : null;
 }
 
 // ---------------------------------------------------------------------------
 // Expense Splits
 // ---------------------------------------------------------------------------
 
-export function createExpenseSplit(split: ExpenseSplit): void {
-  store.expenseSplits.push(split);
+export async function createExpenseSplit(split: ExpenseSplit): Promise<void> {
+  const { error } = await supabase.from('expense_splits').insert({
+    expense_id: split.expense_id,
+    user_id: split.user_id,
+    share_amount: split.share_amount,
+  });
+
+  if (error) throw new Error(`Failed to create split: ${error.message}`);
 }
 
-export function getExpenseSplits(expenseId: string): ExpenseSplit[] {
-  return store.expenseSplits.filter((s) => s.expense_id === expenseId);
+export async function getExpenseSplits(
+  expenseId: string,
+): Promise<ExpenseSplit[]> {
+  const { data, error } = await supabase
+    .from('expense_splits')
+    .select('*')
+    .eq('expense_id', expenseId);
+
+  if (error) throw new Error(`Failed to get splits: ${error.message}`);
+  return (data ?? []).map((s) => toSplit(s as Record<string, unknown>));
 }
 
 // ---------------------------------------------------------------------------
 // Settlements
 // ---------------------------------------------------------------------------
 
-export function createSettlement(data: {
+export async function createSettlement(data: {
   group_id: string;
   from_user: string;
   to_user: string;
   amount: number;
   note?: string;
-}): Settlement {
-  const settlement: Settlement = {
-    id: crypto.randomUUID(),
-    group_id: data.group_id,
-    from_user: data.from_user,
-    to_user: data.to_user,
-    amount: data.amount,
-    status: 'pending',
-    note: data.note ?? '',
-    created_at: new Date().toISOString(),
-  };
-  store.settlements.push(settlement);
-  return settlement;
+}): Promise<Settlement> {
+  const { data: settlement, error } = await supabase
+    .from('settlements')
+    .insert({
+      group_id: data.group_id,
+      from_user: data.from_user,
+      to_user: data.to_user,
+      amount: data.amount,
+      note: data.note ?? '',
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create settlement: ${error.message}`);
+  return toSettlement(settlement as Record<string, unknown>);
 }
 
-export function updateSettlementStatus(
+export async function updateSettlementStatus(
   id: string,
   status: 'pending' | 'confirmed' | 'disputed',
-): Settlement | undefined {
-  const settlement = store.settlements.find((s) => s.id === id);
-  if (!settlement) return undefined;
-  settlement.status = status;
+): Promise<Settlement | null> {
+  const updateData: Record<string, unknown> = { status };
   if (status === 'confirmed') {
-    settlement.settled_at = new Date().toISOString();
+    updateData.settled_at = new Date().toISOString();
   }
-  return settlement;
+
+  const { data, error } = await supabase
+    .from('settlements')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
+  if (error)
+    throw new Error(`Failed to update settlement: ${error.message}`);
+  return data ? toSettlement(data as Record<string, unknown>) : null;
 }
 
-export function getGroupSettlements(groupId: string): Settlement[] {
-  return store.settlements.filter((s) => s.group_id === groupId);
+export async function getGroupSettlements(
+  groupId: string,
+): Promise<Settlement[]> {
+  const { data, error } = await supabase
+    .from('settlements')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to get settlements: ${error.message}`);
+  return (data ?? []).map((s) => toSettlement(s as Record<string, unknown>));
 }
 
 // ---------------------------------------------------------------------------
 // Balances
 // ---------------------------------------------------------------------------
 
-/** Compute net balances from expenses and settlements for a group.
- *
- *  Positive balance = user is owed money (credit).
- *  Negative balance = user owes money (debt).
- */
-export function computeBalances(
+export async function computeBalances(
   groupId: string,
-): Record<string, number> {
-  const groupExpenses = getGroupExpenses(groupId);
-  const groupSettlements = getGroupSettlements(groupId);
+): Promise<Record<string, number>> {
+  // Fetch all data needed for balance computation
+  const expenses = await getGroupExpenses(groupId);
 
-  const balances: Record<string, number> = {};
+  // Fetch all splits for this group's expenses
+  const expenseIds = expenses.map((e) => e.id);
+  let allSplits: ExpenseSplit[] = [];
+  if (expenseIds.length > 0) {
+    const { data: splits, error: splitsError } = await supabase
+      .from('expense_splits')
+      .select('*')
+      .in('expense_id', expenseIds);
 
-  // Helper to ensure a key exists
-  const ensure = (id: string) => {
-    if (!(id in balances)) balances[id] = 0;
-  };
-
-  // Process expenses
-  for (const expense of groupExpenses) {
-    const payer = expense.paid_by;
-    ensure(payer);
-    balances[payer] += expense.amount; // payer is owed the full amount
-
-    const splits = getExpenseSplits(expense.id);
-    for (const split of splits) {
-      ensure(split.user_id);
-      balances[split.user_id] -= split.share_amount; // each member owes their share
-    }
+    if (splitsError)
+      throw new Error(`Failed to get splits: ${splitsError.message}`);
+    allSplits = (splits ?? []).map((s) =>
+      toSplit(s as Record<string, unknown>),
+    );
   }
 
-  // Process confirmed settlements
-  for (const settlement of groupSettlements) {
-    if (settlement.status !== 'confirmed') continue;
-    ensure(settlement.from_user);
-    ensure(settlement.to_user);
-    balances[settlement.from_user] += settlement.amount; // debtor's balance improves
-    balances[settlement.to_user] -= settlement.amount; // creditor's balance decreases
-  }
+  const settlements = await getGroupSettlements(groupId);
 
-  return balances;
+  // Use the pure compute function from split.ts
+  return computeNetBalances('', expenses, allSplits, settlements);
 }

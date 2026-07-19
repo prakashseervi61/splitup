@@ -16,12 +16,12 @@ export async function GET(
   try {
     const { id: groupId } = await params;
 
-    const group = getGroup(groupId);
+    const group = await getGroup(groupId);
     if (!group) {
       return Response.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    const balances = computeBalances(groupId);
+    const balances = await computeBalances(groupId);
     const simplified = request.nextUrl.searchParams.get('simplified') === 'true';
 
     if (simplified) {

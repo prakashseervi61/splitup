@@ -69,6 +69,7 @@ const tabs: { key: Tab; label: string }[] = [
 export default function GroupDetailPage() {
   const params = useParams();
   const groupId = params.id as string;
+  const [userId, setUserId] = useState("");
 
   const [group, setGroup] = useState<GroupData | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("expenses");
@@ -159,6 +160,10 @@ export default function GroupDetailPage() {
   // Initial load
   useEffect(() => {
     fetchGroup();
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((user) => { if (user) setUserId(user.id); })
+      .catch(() => {});
   }, [fetchGroup]);
 
   // Load tab data when switching tabs
@@ -266,6 +271,7 @@ export default function GroupDetailPage() {
             groupId={groupId}
             members={members}
             onRefresh={fetchExpenses}
+            userId={userId}
           />
         )}
 

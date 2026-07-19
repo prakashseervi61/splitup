@@ -1,30 +1,40 @@
-import { cookies } from 'next/headers';
+import { createServerSupabase } from '@/lib/supabase/server';
 import { findUserById } from '@/lib/db/store';
 import type { User } from '@/types';
 
-const SESSION_COOKIE = 'splitup_session';
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 1 week
+// ---------------------------------------------------------------------------
+// Session helpers backed by Supabase Auth
+// ---------------------------------------------------------------------------
 
 export async function getSession(): Promise<{ user: User } | null> {
-  const cookieStore = await cookies();
-  const value = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!value) return null;
-  const user = findUserById(value);
-  return user ? { user } : null;
+  try {
+    const supabase = await createServerSupabase();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (!authUser) return null;
+
+    const user = await findUserById(authUser.id);
+    return user ? { user } : null;
+  } catch {
+    return null;
+  }
 }
 
-export async function setSession(user: User): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, user.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: SESSION_MAX_AGE,
-  });
+/**
+ * Set a session for a user by creating a Supabase Auth session.
+ * Used for backward compatibility — the verify-otp route now handles
+ * this via Supabase Auth directly, but this helper is kept for any
+ * code that still calls setSession directly.
+ */
+export async function setSession(_user: User): Promise<void> {
+  // Sessions are managed entirely by Supabase Auth via the verify-otp flow.
+  // This is a no-op — the Supabase SSR cookie is already set by the auth
+  // response. The function is kept for API compatibility.
 }
 
 export async function clearSession(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE);
+  const supabase = await createServerSupabase();
+  await supabase.auth.signOut();
 }

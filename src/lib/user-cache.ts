@@ -1,18 +1,19 @@
-const nameCache: Record<string, string> = { "user-1": "You" };
-const vpaCache: Record<string, string> = { "user-1": "you@upi" };
+// ---------------------------------------------------------------------------
+// Client-side cache for user display names and VPAs.
+// Populated by components when they receive user/member data from API calls.
+// ---------------------------------------------------------------------------
 
-export function getUserName(userId: string): string {
-  return nameCache[userId] ?? userId.slice(0, 8);
+const nameCache: Record<string, string> = {};
+const vpaCache: Record<string, string> = {};
+
+export function setUserName(id: string, name: string): void {
+  nameCache[id] = name;
 }
 
-export function setUserName(userId: string, name: string): void {
-  nameCache[userId] = name;
+export function getUserName(id: string): string {
+  return nameCache[id] ?? `User ${id.slice(0, 6)}`;
 }
 
-export function getUserVpa(userId: string): string {
-  return vpaCache[userId] ?? "";
-}
-
-export function setUserVpa(userId: string, vpa: string): void {
-  vpaCache[userId] = vpa;
+export function getUserVpa(id: string): string {
+  return vpaCache[id] ?? '';
 }

@@ -17,7 +17,7 @@ export async function POST(
   try {
     const { id: groupId } = await params;
 
-    const group = getGroup(groupId);
+    const group = await getGroup(groupId);
     if (!group) {
       return Response.json({ error: 'Group not found' }, { status: 404 });
     }
@@ -47,7 +47,7 @@ export async function POST(
     }
 
     // Verify both users are members
-    const members = getGroupMembers(groupId);
+    const members = await getGroupMembers(groupId);
     const memberIds = new Set(members.map((m) => m.user_id));
     if (!memberIds.has(from_user)) {
       return Response.json(
@@ -62,7 +62,7 @@ export async function POST(
       );
     }
 
-    const settlement = createSettlement({
+    const settlement = await createSettlement({
       group_id: groupId,
       from_user,
       to_user,
@@ -89,12 +89,12 @@ export async function GET(
   try {
     const { id: groupId } = await params;
 
-    const group = getGroup(groupId);
+    const group = await getGroup(groupId);
     if (!group) {
       return Response.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    const settlements = getGroupSettlements(groupId);
+    const settlements = await getGroupSettlements(groupId);
     return Response.json(settlements);
   } catch (err) {
     return Response.json(

@@ -8,9 +8,10 @@ interface CreateGroupFormProps {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
+  userId: string;
 }
 
-export default function CreateGroupForm({ open, onClose, onCreated }: CreateGroupFormProps) {
+export default function CreateGroupForm({ open, onClose, onCreated, userId }: CreateGroupFormProps) {
   const [name, setName] = useState("");
   const [type, setType] = useState<"pg" | "hostel" | "trip">("pg");
   const [newMemberName, setNewMemberName] = useState("");
@@ -59,7 +60,7 @@ export default function CreateGroupForm({ open, onClose, onCreated }: CreateGrou
         body: JSON.stringify({
           name: name.trim(),
           type,
-          created_by: "user-1",
+          created_by: userId,
           newMembers,
         }),
       });
