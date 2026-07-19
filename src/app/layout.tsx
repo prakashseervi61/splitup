@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import NavBar from "@/components/ui/NavBar";
+import { getSession } from "@/lib/auth/session";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,11 +21,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+
   return (
     <html
       lang="en"
@@ -34,7 +37,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#6366f1" />
       </head>
       <body className="min-h-full bg-gray-50 font-sans text-gray-900">
-        <NavBar />
+        <NavBar user={session?.user ?? null} />
         <main className="flex-1">{children}</main>
       </body>
     </html>

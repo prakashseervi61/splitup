@@ -1,11 +1,22 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import type { User } from '@/types';
 
-export default function NavBar() {
+export default function NavBar({ user }: { user: User | null }) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const router = useRouter();
+  const isHome = pathname === '/';
+  const isLoginPage = pathname === '/login';
+
+  // ponytail: hide entirely on login page — auth layout doesn't need nav
+  if (isLoginPage) return null;
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-md">
@@ -29,9 +40,17 @@ export default function NavBar() {
               Dashboard
             </Link>
           )}
-          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-600">
-            Demo
-          </span>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">{user.name}</span>
+              <button
+                onClick={handleLogout}
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+              >
+                Logout
+              </button>
+            </div>
+          ) : null}
         </nav>
       </div>
     </header>
