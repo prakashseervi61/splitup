@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import NavBar from "@/components/ui/NavBar";
 import { getSession } from "@/lib/auth/session";
+import ClientLayout from "./client-layout";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,8 +38,10 @@ export default async function RootLayout({
         <meta name="theme-color" content="#087B6E" />
       </head>
       <body className="min-h-full bg-background font-sans text-text-heading">
-        <NavBar user={session?.user ?? null} />
-        <main className="flex-1">{children}</main>
+        <ClientLayout>
+          <NavBar user={session?.user ?? null} />
+          <main className="flex-1">{children}</main>
+        </ClientLayout>
       </body>
     </html>
   );

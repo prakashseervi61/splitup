@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { setUserName, getUserName } from "@/lib/user-cache";
+import { useUser } from "@/lib/user-context";
 import ExpenseList from "@/components/expenses/ExpenseList";
 import BalanceSheet from "@/components/groups/BalanceSheet";
 import SettlementList from "@/components/settlements/SettlementList";
@@ -69,6 +69,7 @@ const tabs: { key: Tab; label: string }[] = [
 export default function GroupDetailPage() {
   const params = useParams();
   const groupId = params.id as string;
+  const { getUserName, ensureUsers } = useUser();
   const [userId, setUserId] = useState("");
 
   const [group, setGroup] = useState<GroupData | null>(null);
@@ -165,6 +166,13 @@ export default function GroupDetailPage() {
       .then((user) => { if (user) setUserId(user.id); })
       .catch(() => {});
   }, [fetchGroup]);
+
+  // Fetch user names for member display
+  useEffect(() => {
+    if (group?.members?.length) {
+      ensureUsers(group.members.map((m) => m.user_id));
+    }
+  }, [group?.members, ensureUsers]);
 
   // Load tab data when switching tabs
   useEffect(() => {

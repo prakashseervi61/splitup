@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // ponytail: no PWA plugin needed — manifest.json in public/ + metadata link tag suffice for Phase 1
+  // ponytail: no PWA plugin needed — manifest.json in public/ + metadata link tag suffice
   async headers() {
     return [
       {
@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         ],
       },
       {

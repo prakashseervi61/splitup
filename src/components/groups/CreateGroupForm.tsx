@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import Modal from "@/components/ui/Modal";
-import { setUserName, getUserName } from "@/lib/user-cache";
+import { useUser } from "@/lib/user-context";
 
 interface CreateGroupFormProps {
   open: boolean;
@@ -12,6 +12,7 @@ interface CreateGroupFormProps {
 }
 
 export default function CreateGroupForm({ open, onClose, onCreated, userId }: CreateGroupFormProps) {
+  const { cacheUsers } = useUser();
   const [name, setName] = useState("");
   const [type, setType] = useState<"pg" | "hostel" | "trip">("pg");
   const [newMemberName, setNewMemberName] = useState("");
@@ -72,22 +73,14 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
         return;
       }
 
-      // Cache user names for new members
-      const knownIds = new Set(["user-1"]);
-      for (const m of data.members as { user_id: string }[]) {
-        if (!knownIds.has(m.user_id)) {
-          knownIds.add(m.user_id);
-        }
+      // Cache user names for new members via batch API
+      const allIds = (data.members as { user_id: string }[]).map((m) => m.user_id);
+      if (allIds.length > 0) {
+        fetch(`/api/users/batch?ids=${allIds.join(',')}`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((userMap) => { if (userMap) cacheUsers(userMap); })
+          .catch(() => {});
       }
-
-      // Assign names to new user IDs (skip known ones)
-      const newUserIds = (data.members as { user_id: string }[])
-        .map((m) => m.user_id)
-        .filter((id) => id !== "user-1");
-
-      newUserIds.forEach((id: string, i: number) => {
-        if (memberNames[i]) setUserName(id, memberNames[i]);
-      });
 
       reset();
       onClose();

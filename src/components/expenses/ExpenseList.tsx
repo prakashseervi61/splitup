@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getUserName } from "@/lib/user-cache";
+import { useUser } from "@/lib/user-context";
 import ExpenseForm from "./ExpenseForm";
 
 interface ExpenseSplit {
@@ -50,6 +50,7 @@ function formatDate(iso: string) {
 }
 
 export default function ExpenseList({ expenses, loading, error, groupId, members, onRefresh, userId }: ExpenseListProps) {
+  const { getUserName } = useUser();
   const [showForm, setShowForm] = useState(false);
 
   return (

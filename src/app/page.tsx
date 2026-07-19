@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useUser } from "@/lib/user-context";
 import GroupCard from "@/components/groups/GroupCard";
 import CreateGroupForm from "@/components/groups/CreateGroupForm";
 
@@ -16,6 +17,7 @@ interface Group {
 }
 
 export default function Dashboard() {
+  const { ensureUsers } = useUser();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -33,6 +35,9 @@ export default function Dashboard() {
       }
       const data = await res.json();
       setGroups(data);
+      // Cache user names for all members
+      const allIds = data.flatMap((g: Group) => g.members.map((m: { user_id: string }) => m.user_id));
+      if (allIds.length > 0) ensureUsers(allIds);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

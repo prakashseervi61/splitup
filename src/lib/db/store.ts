@@ -67,6 +67,16 @@ export async function findUserById(id: string): Promise<User | null> {
   return data as User | null;
 }
 
+export async function findUsersByIds(ids: string[]): Promise<User[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .in('id', ids);
+  if (error) throw new Error(`Failed to find users: ${error.message}`);
+  return (data ?? []) as User[];
+}
+
 export async function createUser(data: {
   id?: string;
   phone: string;

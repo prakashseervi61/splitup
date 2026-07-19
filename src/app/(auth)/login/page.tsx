@@ -187,10 +187,6 @@ function LoginForm() {
             </form>
           )}
 
-          {/* STUB notice */}
-          <p className="mt-4 text-center text-[10px] text-text-muted">
-            OTP verification is simulated — any 6-digit code works
-          </p>
         </div>
       </div>
     </div>

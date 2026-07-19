@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getUserName, getUserVpa } from "@/lib/user-cache";
+import { useUser } from "@/lib/user-context";
 import SettleFlow from "@/components/settlements/SettleFlow";
 
 interface SimplifiedDebt {
@@ -29,6 +29,7 @@ export default function BalanceSheet({
   members,
   onRefresh,
 }: BalanceSheetProps) {
+  const { getUserName, getUserVpa } = useUser();
   const [showSimplified, setShowSimplified] = useState(true);
   const [settleTarget, setSettleTarget] = useState<{
     from: string;

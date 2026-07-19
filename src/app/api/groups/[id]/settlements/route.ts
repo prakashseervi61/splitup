@@ -5,6 +5,7 @@ import {
   createSettlement,
   getGroupSettlements,
 } from '@/lib/db/store';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // ---------------------------------------------------------------------------
 // POST /api/groups/[id]/settlements  —  create a settlement
@@ -16,6 +17,16 @@ export async function POST(
 ) {
   try {
     const { id: groupId } = await params;
+
+    // Rate limit: 10 settlement creations per group per 60s
+    const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
+    const rl = checkRateLimit(`settle:${groupId}:${ip}`, 10, 60_000);
+    if (!rl.allowed) {
+      return Response.json(
+        { error: 'Too many settlement requests. Please wait.' },
+        { status: 429 },
+      );
+    }
 
     const group = await getGroup(groupId);
     if (!group) {

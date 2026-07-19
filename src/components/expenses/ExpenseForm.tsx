@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import Modal from "@/components/ui/Modal";
-import { getUserName } from "@/lib/user-cache";
+import { useUser } from "@/lib/user-context";
 
 interface Member {
   user_id: string;
@@ -31,6 +31,7 @@ const CATEGORIES = [
 ];
 
 export default function ExpenseForm({ open, onClose, groupId, members, onCreated, userId }: ExpenseFormProps) {
+  const { getUserName } = useUser();
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Food");
@@ -117,7 +118,7 @@ export default function ExpenseForm({ open, onClose, groupId, members, onCreated
       setDescription("");
       setAmount("");
       setCategory("Food");
-      setPaidBy("user-1");
+      setPaidBy(userId);
       setSplitMethod("equal");
       setCustomShares({});
       setPercentages({});

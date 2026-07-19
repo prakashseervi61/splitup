@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getUserName, getUserVpa } from "@/lib/user-cache";
+import { useUser } from "@/lib/user-context";
 import QrCode from "@/components/ui/QrCode";
 import { generateUpiLink } from "@/lib/upi/generate-link";
 
@@ -35,6 +35,7 @@ function formatDate(iso: string) {
 }
 
 export default function SettlementList({ settlements, loading, error, groupId, onRefresh }: SettlementListProps) {
+  const { getUserName, getUserVpa } = useUser();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [qrSettlement, setQrSettlement] = useState<string | null>(null);
 

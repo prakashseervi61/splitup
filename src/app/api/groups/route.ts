@@ -8,6 +8,7 @@ import {
   findUserByPhone,
   findUserById,
 } from '@/lib/db/store';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // ---------------------------------------------------------------------------
 // POST /api/groups  —  create a new group
@@ -17,8 +18,18 @@ import {
 //   newMembers optional array of { phone, name } to create+add on the fly
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 groups per user per hour
     const body = await request.json();
     const { name, type, created_by, members, newMembers } = body;
+    if (created_by) {
+      const rl = checkRateLimit(`group:create:${created_by}`, 5, 3600_000);
+      if (!rl.allowed) {
+        return Response.json(
+          { error: 'Too many groups created. Please try again later.' },
+          { status: 429 },
+        );
+      }
+    }
 
     if (!name || !type || !created_by) {
       return Response.json(
