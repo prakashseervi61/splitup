@@ -1,10 +1,14 @@
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getMockSessionUserId } from '@/lib/auth/mock-session';
 
 // ---------------------------------------------------------------------------
 // Auth proxy — runs before every matching request.
 // Redirects unauthenticated users to /login.
+//
+// DEV MODE: Uses a mock session cookie instead of Supabase Auth phone OTP.
+//   The mock session is set by the /api/auth/verify-otp route after accepting
+//   any 6-digit code. This is temporary — see mock-session.ts for swap docs.
 //
 // Public routes (no auth check):
 //   - /_next/*         (Next.js internals)
@@ -12,6 +16,10 @@ import type { NextRequest } from 'next/server';
 //   - /login           (login page)
 //   - /favicon.ico     (browser icon)
 //   - /manifest.json   (PWA manifest)
+//
+// TODO: When real OTP is wired, uncomment the supabase.auth.getUser() call
+//       below and remove the mock_session check. This is the ONLY place the
+//       proxy needs to change.
 //
 // Next.js 16 note: middleware.ts is deprecated, this file uses the new
 // proxy.ts convention. See node_modules/next/dist/docs/ for details.
@@ -31,44 +39,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Create Supabase client from request cookies
-  let response = NextResponse.next();
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    },
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    // API routes return JSON 401 instead of HTML redirect so client fetch() works
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 },
-      );
-    }
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
-    return NextResponse.redirect(loginUrl);
+  // DEV MODE: Check mock session cookie first.
+  // TODO: Replace with supabase.auth.getUser() for real OTP auth.
+  const mockUserId = getMockSessionUserId(request);
+  if (mockUserId) {
+    return NextResponse.next();
   }
 
-  return response;
+  // API routes return JSON 401 instead of HTML redirect so client fetch() works
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json(
+      { error: 'Not authenticated' },
+      { status: 401 },
+    );
+  }
+  const loginUrl = new URL('/login', request.url);
+  loginUrl.searchParams.set('from', pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {

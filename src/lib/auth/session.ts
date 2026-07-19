@@ -1,21 +1,22 @@
-import { createServerSupabase } from '@/lib/supabase/server';
 import { findUserById } from '@/lib/db/store';
+import { getMockSessionUserIdServer } from '@/lib/auth/mock-session';
 import type { User } from '@/types';
 
 // ---------------------------------------------------------------------------
-// Session helpers backed by Supabase Auth
+// Session helpers — reads current user from the mock session cookie.
+// Used by the layout to show the correct nav state.
+//
+// DEV MODE: Uses mock session cookie. See mock-session.ts for swap docs.
+// TODO: When real OTP is wired, use createServerSupabase() and
+//       supabase.auth.getUser() instead.
 // ---------------------------------------------------------------------------
 
 export async function getSession(): Promise<{ user: User } | null> {
   try {
-    const supabase = await createServerSupabase();
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
+    const userId = await getMockSessionUserIdServer();
+    if (!userId) return null;
 
-    if (!authUser) return null;
-
-    const user = await findUserById(authUser.id);
+    const user = await findUserById(userId);
     return user ? { user } : null;
   } catch {
     return null;
@@ -23,18 +24,14 @@ export async function getSession(): Promise<{ user: User } | null> {
 }
 
 /**
- * Set a session for a user by creating a Supabase Auth session.
- * Used for backward compatibility — the verify-otp route now handles
- * this via Supabase Auth directly, but this helper is kept for any
- * code that still calls setSession directly.
+ * Set a session for a user — no-op in dev mode.
+ * Sessions are managed by the mock cookie set in verify-otp.
  */
 export async function setSession(_user: User): Promise<void> {
-  // Sessions are managed entirely by Supabase Auth via the verify-otp flow.
-  // This is a no-op — the Supabase SSR cookie is already set by the auth
-  // response. The function is kept for API compatibility.
+  // Sessions are managed entirely by the mock session cookie via verify-otp.
+  // This is a no-op.
 }
 
 export async function clearSession(): Promise<void> {
-  const supabase = await createServerSupabase();
-  await supabase.auth.signOut();
+  // Cleared by the /api/auth/logout route which calls clearMockSessionCookie.
 }
