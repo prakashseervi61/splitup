@@ -3,6 +3,7 @@ export interface User {
   phone: string;
   name: string;
   default_vpa: string;
+  created_at: string;
 }
 
 export interface Group {
