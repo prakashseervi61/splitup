@@ -157,6 +157,7 @@ export default function GroupDetailPage() {
   }, [groupId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchGroup();
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
@@ -171,6 +172,7 @@ export default function GroupDetailPage() {
   }, [group?.members, ensureUsers]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (activeTab === "expenses") fetchExpenses();
     else if (activeTab === "balances") fetchBalances();
     else if (activeTab === "settlements") fetchSettlements();

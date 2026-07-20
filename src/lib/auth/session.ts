@@ -27,7 +27,7 @@ export async function getSession(): Promise<{ user: User } | null> {
  * Set a session for a user — no-op in dev mode.
  * Sessions are managed by the mock cookie set in verify-otp.
  */
-export async function setSession(_user: User): Promise<void> {
+export async function setSession(): Promise<void> {
   // Sessions are managed entirely by the mock session cookie via verify-otp.
   // This is a no-op.
 }

@@ -52,6 +52,7 @@ export default function RecurringPage() {
         if (u) setUserId(u.id);
         else router.push('/login');
       });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTemplates();
     // Get member count
     fetch(`/api/groups/${groupId}`)

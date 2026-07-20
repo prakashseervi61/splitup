@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { clearMockSessionCookie } from '@/lib/auth/mock-session';
 
 // ---------------------------------------------------------------------------
@@ -7,7 +7,7 @@ import { clearMockSessionCookie } from '@/lib/auth/mock-session';
 // TODO: When real OTP is wired, use createServerSupabase() and
 //       supabase.auth.signOut() to clear the Supabase Auth session.
 // ---------------------------------------------------------------------------
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
     const response = NextResponse.json({ success: true });
     clearMockSessionCookie(

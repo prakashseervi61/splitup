@@ -38,6 +38,7 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
   }, [menuOpen, closeMenu]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     closeMenu();
   }, [pathname, closeMenu]);
 

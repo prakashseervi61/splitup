@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 
 interface UserInfo {
   id: string;
@@ -30,7 +30,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<UserMap>({});
   // ponytail: ref avoids stale closure in ensureUsers
   const usersRef = useRef(users);
-  usersRef.current = users;
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
 
   const getUserName = useCallback(
     (id: string) => users[id]?.name ?? `User ${id.slice(0, 6)}`,

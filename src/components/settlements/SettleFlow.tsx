@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef} from "react";
 import Modal from "@/components/ui/Modal";
 import QrCode from "@/components/ui/QrCode";
 import { generateUpiLink } from "@/lib/upi/generate-link";

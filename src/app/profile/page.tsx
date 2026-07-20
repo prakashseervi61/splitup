@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+
 
 interface UserProfile {
   id: string;
