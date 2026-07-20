@@ -1,18 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { findUserByPhone, createUser } from '@/lib/db/store';
+import { findUserByPhone } from '@/lib/db/store';
 import { setMockSessionCookie } from '@/lib/auth/mock-session';
+
+// ---------------------------------------------------------------------------
+// In-memory store for pending phone verifications (new users only).
+// Key: "pending_phone:{phone}", Value: { createdAt: number }
+// Expires after 5 minutes.
+// ---------------------------------------------------------------------------
+const pendingPhones = new Map<string, { createdAt: number }>();
+const PENDING_PHONE_TTL = 5 * 60 * 1000; // 5 minutes
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of pendingPhones) {
+    if (entry.createdAt + PENDING_PHONE_TTL <= now) pendingPhones.delete(key);
+  }
+}, 60_000);
+
+export function getPendingPhone(phone: string): boolean {
+  const entry = pendingPhones.get(`pending_phone:${phone}`);
+  if (!entry) return false;
+  if (Date.now() - entry.createdAt > PENDING_PHONE_TTL) {
+    pendingPhones.delete(`pending_phone:${phone}`);
+    return false;
+  }
+  return true;
+}
 
 // ---------------------------------------------------------------------------
 // POST /api/auth/verify-otp  —  verify OTP and create session
 //
-// DEV MODE: Accepts any 6-digit code, finds or creates the user in the
-// database, and sets a mock session cookie. No Supabase Auth involved.
-//
-// TODO: When real phone OTP is wired:
-//   1. Import createServerSupabase from '@/lib/supabase/server'
-//   2. Call supabase.auth.verifyOtp({ phone, token: otp, type: 'sms' })
-//   3. Remove the setMockSessionCookie call — supabase handles the session
+// DEV MODE: Accepts any 6-digit code.
+//   - Existing user → sets session cookie, returns { user, isNew: false }
+//   - New phone     → stores pending verification, returns { isNew: true }
+//                     (client then calls /create-profile with the name)
 // ---------------------------------------------------------------------------
 export async function POST(request: NextRequest) {
   try {
@@ -41,36 +63,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // DEV MODE: Accept any 6-digit OTP.
-    // TODO: When real OTP is wired, replace the block below with:
-    //   const supabase = await createServerSupabase();
-    //   const { data, error } = await supabase.auth.verifyOtp({ phone, token: otp, type: 'sms' });
-    //   if (error) return Response.json({ error: error.message }, { status: 401 });
-    //   const authUser = data.user;
-    //   if (!authUser) return Response.json({ error: 'Authentication failed' }, { status: 401 });
-    //
-    // What you need in Supabase Dashboard:
-    //   1. Authentication → Providers → Phone → toggle ON
-    //   2. SMS provider credentials (Twilio / MSG91)
+    // Find existing user
+    const existingUser = await findUserByPhone(phone);
 
-    // Find existing user by phone, or create one
-    let user = await findUserByPhone(phone);
-    if (!user) {
-      user = await createUser({
-        phone,
-        name: `User ${phone.slice(-4)}`,
-        default_vpa: '',
-      });
+    if (existingUser) {
+      // Existing user — log in directly
+      const response = NextResponse.json({ user: existingUser, isNew: false });
+      setMockSessionCookie(
+        (cookie) => response.cookies.set(cookie.name, cookie.value, cookie),
+        existingUser.id,
+      );
+      return response;
     }
 
-    // Set mock session cookie
-    const response = NextResponse.json({ user });
-    setMockSessionCookie(
-      (cookie) => response.cookies.set(cookie.name, cookie.value, cookie),
-      user.id,
-    );
+    // New phone — store pending verification, do NOT create user yet
+    pendingPhones.set(`pending_phone:${phone}`, { createdAt: Date.now() });
 
-    return response;
+    return NextResponse.json({ isNew: true });
   } catch {
     return Response.json({ error: 'Invalid request body' }, { status: 400 });
   }

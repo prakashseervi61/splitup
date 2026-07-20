@@ -30,6 +30,7 @@ export async function proxy(request: NextRequest) {
 
   // Allow public routes and assets through without auth
   if (
+    pathname === '/' ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/auth') ||
     pathname === '/login' ||

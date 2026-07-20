@@ -269,10 +269,10 @@ export default function SettleFlow({
             {/* Green flash sweep element */}
             <div
               ref={flashRef}
-              className="absolute inset-0 bg-success/20"
+              className="absolute inset-0 bg-success/15"
               style={{ transform: "translateX(-100%)" }}
             />
-            <p className="relative text-xs text-primary">Payment Initiated</p>
+            <p className="relative text-xs font-medium text-primary">Payment Initiated</p>
             <p className="relative mt-1 text-xl font-semibold text-text-heading" style={{ fontVariantNumeric: "tabular-nums" }}>
               ₹{counterDisplay.toFixed(2)}
             </p>

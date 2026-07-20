@@ -6,6 +6,7 @@ import type {
   Expense,
   ExpenseSplit,
   Settlement,
+  RecurringTemplate,
 } from '@/types';
 import { computeNetBalances } from '@/lib/utils/split';
 
@@ -340,6 +341,110 @@ export async function getGroupSettlements(
 
   if (error) throw new Error(`Failed to get settlements: ${error.message}`);
   return (data ?? []).map((s) => toSettlement(s as Record<string, unknown>));
+}
+
+// ---------------------------------------------------------------------------
+// Recurring Templates
+// ---------------------------------------------------------------------------
+
+function toTemplate(row: Record<string, unknown>): RecurringTemplate {
+  return {
+    ...row,
+    amount: toNum(row.amount),
+  } as unknown as RecurringTemplate;
+}
+
+export async function listRecurringTemplates(
+  groupId: string,
+): Promise<RecurringTemplate[]> {
+  const { data, error } = await supabase
+    .from('recurring_templates')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to list templates: ${error.message}`);
+  return (data ?? []).map((t) => toTemplate(t as Record<string, unknown>));
+}
+
+export async function createRecurringTemplate(data: {
+  group_id: string;
+  created_by: string;
+  description: string;
+  amount: number;
+  category?: string;
+  split_type: 'equal' | 'custom' | 'percentage';
+  split_data?: Record<string, number>;
+  day_of_month?: number;
+}): Promise<RecurringTemplate> {
+  const { data: template, error } = await supabase
+    .from('recurring_templates')
+    .insert({
+      group_id: data.group_id,
+      created_by: data.created_by,
+      description: data.description,
+      amount: data.amount,
+      category: data.category ?? 'Other',
+      split_type: data.split_type,
+      split_data: data.split_data ?? {},
+      day_of_month: data.day_of_month ?? 1,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create template: ${error.message}`);
+  return toTemplate(template as Record<string, unknown>);
+}
+
+export async function updateRecurringTemplate(
+  id: string,
+  data: Partial<{
+    description: string;
+    amount: number;
+    category: string;
+    split_type: 'equal' | 'custom' | 'percentage';
+    split_data: Record<string, number>;
+    day_of_month: number;
+    is_active: boolean;
+  }>,
+): Promise<RecurringTemplate | null> {
+  const { data: template, error } = await supabase
+    .from('recurring_templates')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to update template: ${error.message}`);
+  return template ? toTemplate(template as Record<string, unknown>) : null;
+}
+
+export async function deleteRecurringTemplate(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('recurring_templates')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw new Error(`Failed to delete template: ${error.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// Profile
+// ---------------------------------------------------------------------------
+
+export async function updateUserProfile(
+  id: string,
+  data: { name?: string; default_vpa?: string },
+): Promise<User | null> {
+  const { data: user, error } = await supabase
+    .from('users')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to update profile: ${error.message}`);
+  return user as User | null;
 }
 
 // ---------------------------------------------------------------------------

@@ -7,6 +7,7 @@ import { useUser } from "@/lib/user-context";
 import ExpenseList from "@/components/expenses/ExpenseList";
 import BalanceSheet from "@/components/groups/BalanceSheet";
 import SettlementList from "@/components/settlements/SettlementList";
+import SettleFlow from "@/components/settlements/SettleFlow";
 
 type Tab = "expenses" | "balances" | "settlements";
 
@@ -69,7 +70,7 @@ const tabs: { key: Tab; label: string }[] = [
 export default function GroupDetailPage() {
   const params = useParams();
   const groupId = params.id as string;
-  const { getUserName, ensureUsers } = useUser();
+  const { getUserName, getUserVpa, ensureUsers } = useUser();
   const [userId, setUserId] = useState("");
 
   const [group, setGroup] = useState<GroupData | null>(null);
@@ -77,18 +78,15 @@ export default function GroupDetailPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState("");
 
-  // Expenses
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [expensesLoading, setExpensesLoading] = useState(false);
   const [expensesError, setExpensesError] = useState("");
 
-  // Balances
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [simplified, setSimplified] = useState<SimplifiedDebt[] | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
   const [balancesError, setBalancesError] = useState("");
 
-  // Settlements
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [settlementsLoading, setSettlementsLoading] = useState(false);
   const [settlementsError, setSettlementsError] = useState("");
@@ -158,7 +156,6 @@ export default function GroupDetailPage() {
     }
   }, [groupId]);
 
-  // Initial load
   useEffect(() => {
     fetchGroup();
     fetch("/api/auth/me")
@@ -167,19 +164,23 @@ export default function GroupDetailPage() {
       .catch(() => {});
   }, [fetchGroup]);
 
-  // Fetch user names for member display
   useEffect(() => {
     if (group?.members?.length) {
       ensureUsers(group.members.map((m) => m.user_id));
     }
   }, [group?.members, ensureUsers]);
 
-  // Load tab data when switching tabs
   useEffect(() => {
     if (activeTab === "expenses") fetchExpenses();
     else if (activeTab === "balances") fetchBalances();
     else if (activeTab === "settlements") fetchSettlements();
   }, [activeTab, fetchExpenses, fetchBalances, fetchSettlements]);
+
+  const [settleTarget, setSettleTarget] = useState<{
+    from: string;
+    to: string;
+    amount: number;
+  } | null>(null);
 
   if (pageLoading) {
     return (
@@ -187,7 +188,8 @@ export default function GroupDetailPage() {
         <div className="animate-pulse space-y-4">
           <div className="h-6 w-48 rounded bg-border" />
           <div className="h-4 w-24 rounded bg-border" />
-          <div className="mt-8 h-64 rounded-xl bg-surface-secondary" />
+          <div className="mt-8 h-32 rounded-xl bg-surface-secondary" />
+          <div className="h-64 rounded-xl bg-surface-secondary" />
         </div>
       </div>
     );
@@ -199,7 +201,7 @@ export default function GroupDetailPage() {
         <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-8 text-center">
           <p className="text-red-700">{pageError || "Group not found"}</p>
           <Link
-            href="/"
+            href="/dashboard"
             className="mt-4 inline-block text-sm font-medium text-primary hover:text-primary-dark"
           >
             ← Back to Dashboard
@@ -212,12 +214,30 @@ export default function GroupDetailPage() {
   const t = typeConfig[group.type];
   const members = group.members || [];
 
+  const userBalance = balances[userId] ?? 0;
+
+  const userDebts = simplified?.filter((d) => d.from === userId) ?? [];
+  const userReceivables = simplified?.filter((d) => d.to === userId) ?? [];
+  const hasUserDebts = userDebts.length > 0;
+  const totalUserOwed = userReceivables.reduce((s, d) => s + d.amount, 0);
+  const totalUserOwes = userDebts.reduce((s, d) => s + d.amount, 0);
+
+  const handleSettleAll = () => {
+    if (userDebts.length > 0) {
+      const first = userDebts[0];
+      setSettleTarget({
+        from: first.from,
+        to: first.to,
+        amount: first.amount,
+      });
+    }
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
-      {/* Back link */}
       <Link
-        href="/"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-text-muted hover:text-text-body"
+        href="/dashboard"
+        className="mb-4 inline-flex items-center gap-1 py-2 text-sm text-text-muted hover:text-text-body"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -234,7 +254,6 @@ export default function GroupDetailPage() {
           </span>
         </div>
 
-        {/* Members */}
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
           {members.map((m) => (
             <span
@@ -250,14 +269,60 @@ export default function GroupDetailPage() {
         </div>
       </div>
 
+      {/* Balance Overview Banner */}
+      {userId && (
+        <div className="mb-6 rounded-xl border border-border bg-surface p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-text-muted">
+                Your Balance
+              </p>
+              <p
+                className="mt-0.5 text-2xl font-bold tabular-nums"
+                style={{
+                  color:
+                    userBalance > 0
+                      ? "#15803D"
+                      : userBalance < 0
+                        ? "#B91C1C"
+                        : "#9CA3AF",
+                }}
+              >
+                {userBalance > 0 ? "+" : ""}₹{Math.abs(userBalance).toFixed(2)}
+              </p>
+              <p className="mt-0.5 text-xs text-text-muted">
+                {userBalance > 0
+                  ? `${totalUserOwed > 0 ? `You are owed ₹${totalUserOwed.toFixed(2)}` : "You are owed money"}`
+                  : userBalance < 0
+                    ? `${hasUserDebts ? `You owe ₹${totalUserOwes.toFixed(2)}` : "You owe money"}`
+                    : "All settled up"}
+              </p>
+            </div>
+            {hasUserDebts && (
+              <button
+                onClick={handleSettleAll}
+                className="animate-settle-ripple rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark active:bg-primary-active"
+              >
+                Settle Now
+              </button>
+            )}
+            {userBalance > 0 && totalUserOwed === 0 && !hasUserDebts && (
+              <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-success">
+                All clear
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
-      <div className="mb-6 border-b border-border">
+      <div className="mb-6 flex items-end justify-between border-b border-border">
         <div className="flex gap-6">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+              className={`border-b-2 pb-3 pt-2 text-sm font-medium transition-colors ${
                 activeTab === tab.key
                   ? "border-primary text-primary"
                   : "border-transparent text-text-muted hover:text-text-body"
@@ -267,6 +332,12 @@ export default function GroupDetailPage() {
             </button>
           ))}
         </div>
+        <Link
+          href={`/groups/${groupId}/recurring`}
+          className="pb-3 pt-2 text-xs font-medium text-text-muted transition-colors hover:text-text-body"
+        >
+          Recurring
+        </Link>
       </div>
 
       {/* Tab Content */}
@@ -308,6 +379,26 @@ export default function GroupDetailPage() {
           />
         )}
       </div>
+
+      {/* Global settle flow when triggered from banner */}
+      {settleTarget && !settleTarget.from.includes("placeholder") && (
+        <SettleFlow
+          open={!!settleTarget}
+          onClose={() => setSettleTarget(null)}
+          from={settleTarget.from}
+          fromName={getUserName(settleTarget.from)}
+          to={settleTarget.to}
+          toName={getUserName(settleTarget.to)}
+          vpa={getUserVpa(settleTarget.to)}
+          amount={settleTarget.amount}
+          groupId={groupId}
+          onComplete={() => {
+            setSettleTarget(null);
+            fetchBalances();
+            fetchSettlements();
+          }}
+        />
+      )}
     </div>
   );
 }

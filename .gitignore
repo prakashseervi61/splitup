@@ -40,3 +40,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# stitch design artifacts
+.stitch/
+
+# screenshots
+*.png
+!public/*.png
+
+# misc
+null

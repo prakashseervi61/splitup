@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { findUserByPhone } from '@/lib/db/store';
 
 // ---------------------------------------------------------------------------
 // POST /api/auth/send-otp  —  send SMS OTP via Supabase Auth
@@ -39,7 +40,13 @@ export async function POST(request: NextRequest) {
     //   2. Configure an SMS provider (Twilio / MSG91) with credentials
     //   3. Then uncomment the supabase call above
 
-    return Response.json({ success: true, message: 'OTP sent successfully' });
+    const existingUser = await findUserByPhone(phone);
+
+    return Response.json({
+      success: true,
+      message: 'OTP sent successfully',
+      exists: existingUser !== null,
+    });
   } catch {
     return Response.json({ error: 'Invalid request body' }, { status: 400 });
   }

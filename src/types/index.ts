@@ -49,3 +49,18 @@ export interface Settlement {
   created_at: string;
   settled_at?: string;
 }
+
+export interface RecurringTemplate {
+  id: string;
+  group_id: string;
+  created_by: string;
+  description: string;
+  amount: number;
+  category: string;
+  split_type: 'equal' | 'custom' | 'percentage';
+  split_data: Record<string, number>;
+  day_of_month: number;
+  is_active: boolean;
+  next_due: string | null;
+  created_at: string;
+}
