@@ -8,6 +8,7 @@ import ExpenseList from "@/components/expenses/ExpenseList";
 import BalanceSheet from "@/components/groups/BalanceSheet";
 import SettlementList from "@/components/settlements/SettlementList";
 import SettleFlow from "@/components/settlements/SettleFlow";
+import InviteMemberModal from "@/components/groups/InviteMemberModal";
 
 type Tab = "expenses" | "balances" | "settlements";
 
@@ -178,6 +179,8 @@ export default function GroupDetailPage() {
     else if (activeTab === "settlements") fetchSettlements();
   }, [activeTab, fetchExpenses, fetchBalances, fetchSettlements]);
 
+  const [showInvite, setShowInvite] = useState(false);
+
   const [settleTarget, setSettleTarget] = useState<{
     from: string;
     to: string;
@@ -268,6 +271,15 @@ export default function GroupDetailPage() {
               {getUserName(m.user_id)}
             </span>
           ))}
+          <button
+            onClick={() => setShowInvite(true)}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1 text-xs font-medium text-text-muted transition-colors hover:border-primary hover:text-primary"
+          >
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Invite
+          </button>
         </div>
       </div>
 
@@ -401,6 +413,20 @@ export default function GroupDetailPage() {
           }}
         />
       )}
+      {/* Invite Member Modal */}
+      <InviteMemberModal
+        open={showInvite}
+        onClose={() => setShowInvite(false)}
+        groupId={groupId}
+        onMemberAdded={async () => {
+          await fetchGroup();
+          const res = await fetch(`/api/groups/${groupId}`);
+          if (res.ok) {
+            const data: GroupData = await res.json();
+            ensureUsers(data.members.map((m) => m.user_id));
+          }
+        }}
+      />
     </div>
   );
 }
