@@ -30,6 +30,12 @@ export default function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
+  const [invitePhone, setInvitePhone] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+  const [inviteSuccess, setInviteSuccess] = useState(false);
 
   const fetchInvites = useCallback(async () => {
     setLoading(true);
@@ -60,6 +66,20 @@ export default function InboxPage() {
     fetchInvites();
   }, [fetchInvites]);
 
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => (r.ok ? r.json() : null))
+      .then(u => {
+        if (u && u.id) {
+          fetch(`/api/groups?userId=${u.id}`)
+            .then(r => (r.ok ? r.json() : []))
+            .then(setGroups)
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleAction = async (inviteId: string, action: 'accept' | 'reject') => {
     setActionLoading(inviteId);
     try {
@@ -84,6 +104,33 @@ export default function InboxPage() {
       setError('Something went wrong');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleSendInvite = async () => {
+    setSendingInvite(true);
+    setInviteError('');
+    setInviteSuccess(false);
+    try {
+      const res = await fetch('/api/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ group_id: selectedGroup, to_phone: `+91${invitePhone}` }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setInviteError(data.error || 'Failed to send invite');
+        return;
+      }
+      setInviteSuccess(true);
+      setInvitePhone('');
+      setSelectedGroup('');
+      fetchInvites();
+      setTimeout(() => setInviteSuccess(false), 3000);
+    } catch {
+      setInviteError('Network error');
+    } finally {
+      setSendingInvite(false);
     }
   };
 
@@ -227,20 +274,55 @@ export default function InboxPage() {
           )}
 
           {received.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-divider py-16 text-center">
-              <svg className="mb-3 h-10 w-10 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-              </svg>
-              <p className="text-sm font-medium text-text-body">No invites yet</p>
-              <p className="mt-1 text-xs text-text-muted">
-                Invites from group members will appear here
-              </p>
-            </div>
+            <p className="py-16 text-center text-sm text-text-muted">
+              No invitations received
+            </p>
           )}
         </div>
       ) : (
         /* Sent tab */
-        <div className="space-y-3">
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <h3 className="mb-3 text-sm font-semibold text-text-heading">Send an Invite</h3>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-1">
+                <span className="inline-flex items-center rounded-l-lg border border-r-0 border-border bg-surface-secondary px-3 text-sm text-text-muted">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  value={invitePhone}
+                  onChange={(e) => setInvitePhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="Phone number"
+                  className="block w-full rounded-r-lg border border-border px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <select
+                value={selectedGroup}
+                onChange={(e) => setSelectedGroup(e.target.value)}
+                className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+              >
+                <option value="">Select a group</option>
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={handleSendInvite}
+                disabled={sendingInvite || !invitePhone || invitePhone.length !== 10 || !selectedGroup}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {sendingInvite ? 'Sending...' : 'Send Invite'}
+              </button>
+            </div>
+            {inviteError && (
+              <p className="mt-2 text-xs text-red-600">{inviteError}</p>
+            )}
+            {inviteSuccess && (
+              <p className="mt-2 text-xs text-success">Invite sent successfully!</p>
+            )}
+          </div>
+
           {sent.length > 0 ? (
             sent.map((invite) => (
               <div
@@ -265,15 +347,9 @@ export default function InboxPage() {
               </div>
             ))
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-divider py-16 text-center">
-              <svg className="mb-3 h-10 w-10 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-              </svg>
-              <p className="text-sm font-medium text-text-body">No sent invites</p>
-              <p className="mt-1 text-xs text-text-muted">
-                Invite members from any group page
-              </p>
-            </div>
+            <p className="py-16 text-center text-sm text-text-muted">
+              No invitations sent yet
+            </p>
           )}
         </div>
       )}
