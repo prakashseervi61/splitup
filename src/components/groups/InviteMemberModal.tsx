@@ -45,16 +45,16 @@ export default function InviteMemberModal({
     setSuccess(false);
 
     try {
-      const res = await fetch(`/api/groups/${groupId}/members`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: trimmed }),
+      const res = await fetch('/api/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ group_id: groupId, to_phone: trimmed }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to add member");
+        setError(data.error || 'Failed to send invite');
         return;
       }
 
@@ -87,13 +87,13 @@ export default function InviteMemberModal({
               />
             </svg>
           </div>
-          <p className="text-sm font-medium text-text-body">Member added!</p>
+          <p className="text-sm font-medium text-text-body">Invite sent!</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-xs text-text-muted">
-            Enter the phone number of the person you want to add. They must
-            already have a SplitUP account.
+            Enter the phone number of the person you want to invite. They&apos;ll receive
+            the invite in their inbox.
           </p>
 
           <div>
@@ -156,10 +156,10 @@ export default function InviteMemberModal({
                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                   />
                 </svg>
-                Adding...
+                Sending...
               </span>
             ) : (
-              "Add Member"
+              "Send Invite"
             )}
           </button>
         </form>

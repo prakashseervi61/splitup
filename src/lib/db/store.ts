@@ -7,6 +7,7 @@ import type {
   ExpenseSplit,
   Settlement,
   RecurringTemplate,
+  Invite,
 } from '@/types';
 import { computeNetBalances } from '@/lib/utils/split';
 
@@ -199,6 +200,84 @@ export async function isGroupMember(
 
   if (error) throw new Error(`Failed to check membership: ${error.message}`);
   return data !== null;
+}
+
+// ---------------------------------------------------------------------------
+// Invites
+// ---------------------------------------------------------------------------
+
+export async function createInvite(data: {
+  group_id: string;
+  from_user_id: string;
+  to_phone: string;
+  to_user_id?: string;
+}): Promise<Invite> {
+  const insertData: Record<string, unknown> = {
+    group_id: data.group_id,
+    from_user_id: data.from_user_id,
+    to_phone: data.to_phone,
+  };
+  if (data.to_user_id) insertData.to_user_id = data.to_user_id;
+
+  const { data: invite, error } = await supabase
+    .from('invites')
+    .insert(insertData)
+    .select()
+    .single();
+
+  if (error) {
+    const msg = error.message ?? '';
+    if (msg.includes('duplicate') || msg.includes('unique') || msg.includes('already')) {
+      const err = new Error('User already invited or already a member');
+      (err as Error & { status?: number }).status = 409;
+      throw err;
+    }
+    throw new Error(`Failed to create invite: ${msg}`);
+  }
+  return invite as Invite;
+}
+
+export async function listInvitesForPhone(phone: string): Promise<Invite[]> {
+  const { data, error } = await supabase
+    .from('invites')
+    .select('*')
+    .eq('to_phone', phone)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to list invites: ${error.message}`);
+  return (data ?? []) as Invite[];
+}
+
+export async function listInvitesByUser(userId: string): Promise<Invite[]> {
+  const { data, error } = await supabase
+    .from('invites')
+    .select('*')
+    .eq('from_user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to list invites: ${error.message}`);
+  return (data ?? []) as Invite[];
+}
+
+export async function updateInviteStatus(
+  id: string,
+  status: 'accepted' | 'rejected',
+): Promise<Invite | null> {
+  const { data: invite, error } = await supabase
+    .from('invites')
+    .update({ status })
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to update invite: ${error.message}`);
+  if (!invite) return null;
+
+  if (status === 'accepted' && invite.to_user_id) {
+    await addGroupMember(invite.group_id, invite.to_user_id);
+  }
+
+  return invite as Invite;
 }
 
 // ---------------------------------------------------------------------------

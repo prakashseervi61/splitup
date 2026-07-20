@@ -64,3 +64,13 @@ export interface RecurringTemplate {
   next_due: string | null;
   created_at: string;
 }
+
+export interface Invite {
+  id: string;
+  group_id: string;
+  from_user_id: string;
+  to_phone: string;
+  to_user_id: string | null;
+  status: 'pending' | 'accepted' | 'rejected';
+  created_at: string;
+}
