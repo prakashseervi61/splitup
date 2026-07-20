@@ -9,15 +9,23 @@ function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 }
 
-export default function NavBar({ user }: { user: User | null }) {
+export default function NavBar({ user: initialUser }: { user: User | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const isLanding = pathname === '/';
   const isLoginPage = pathname === '/login';
+  const [user, setUser] = useState<User | null>(initialUser);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => setUser(data && !data.error ? data : null))
+      .catch(() => setUser(null));
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -53,7 +61,7 @@ export default function NavBar({ user }: { user: User | null }) {
     <header className={`sticky top-0 z-40 border-b border-border bg-white/80 backdrop-blur-md ${isLanding ? 'border-transparent' : ''}`}>
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
         <Link
-          href="/"
+          href={user ? "/dashboard" : "/"}
           onClick={handleBrandClick}
           className="text-lg font-bold tracking-tight text-primary"
         >
@@ -64,19 +72,17 @@ export default function NavBar({ user }: { user: User | null }) {
         <nav className="hidden items-center gap-2 text-sm md:flex">
           {user ? (
             <div className="flex items-center gap-1">
-              {!pathname.startsWith('/dashboard') && (
-                <Link
-                  href="/dashboard"
-                  className="rounded-lg px-3 py-2.5 text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"
-                >
-                  Dashboard
-                </Link>
-              )}
+              <Link
+                href="/dashboard"
+                className="rounded-lg px-3 py-2.5 text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"
+              >
+                Dashboard
+              </Link>
               <Link
                 href="/profile"
                 className="rounded-lg px-3 py-2.5 text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"
               >
-                {user.name}
+                Profile
               </Link>
               <button
                 onClick={handleLogout}
@@ -116,34 +122,8 @@ export default function NavBar({ user }: { user: User | null }) {
           )}
         </nav>
 
-        {/* Mobile: logged-in nav (always visible on small screens) */}
-        {user && (
-          <div className="flex items-center gap-1 text-sm md:hidden">
-            {!pathname.startsWith('/dashboard') && (
-              <Link
-                href="/dashboard"
-                className="rounded-lg px-2 py-2.5 text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"
-              >
-                Dashboard
-              </Link>
-            )}
-            <Link
-              href="/profile"
-              className="rounded-lg px-2 py-2.5 text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"
-            >
-              {user.name}
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="rounded-lg border border-border px-2 py-2.5 text-sm text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"
-            >
-              Logout
-            </button>
-          </div>
-        )}
-
-        {/* Mobile hamburger button (landing, not logged in) */}
-        {!user && isLanding && (
+        {/* Mobile hamburger button (logged-in users OR landing page) */}
+        {(user || (!user && isLanding)) && (
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="relative flex h-11 w-11 items-center justify-center rounded-lg text-text-body transition-colors hover:bg-surface-secondary md:hidden"
@@ -166,7 +146,40 @@ export default function NavBar({ user }: { user: User | null }) {
           </Link>
         )}
 
-        {/* Mobile menu panel */}
+        {/* Mobile menu panel — logged-in users */}
+        {user && (
+          <div
+            ref={menuRef}
+            className={`absolute left-0 top-14 w-full overflow-hidden border-b border-border bg-white shadow-lg transition-all duration-[250ms] ease-in-out md:hidden ${
+              menuOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 border-b-0'
+            }`}
+          >
+            <div className="flex flex-col gap-1 px-4 py-3">
+              <Link
+                href="/dashboard"
+                onClick={closeMenu}
+                className="rounded-lg px-3 py-3 text-left text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/profile"
+                onClick={closeMenu}
+                className="rounded-lg px-3 py-3 text-left text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"
+              >
+                Profile
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="rounded-lg border border-border px-3 py-3 text-center text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile menu panel — landing page, not logged in */}
         {isLanding && !user && (
           <div
             ref={menuRef}

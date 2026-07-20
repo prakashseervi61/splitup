@@ -325,7 +325,7 @@ function LoginPageInner() {
                 <p className="mt-1 text-xs text-text-muted">
                   Sent to {maskedPhone}
                 </p>
-                <div className="mt-3 flex justify-between gap-2" onPaste={handleOtpPaste}>
+                <div className="mt-3 grid grid-cols-6 gap-2" onPaste={handleOtpPaste}>
                   {otp.map((digit, i) => (
                     <input
                       key={i}
@@ -336,7 +336,7 @@ function LoginPageInner() {
                       value={digit}
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                      className="h-12 w-12 rounded-lg border border-border text-center text-lg font-semibold focus:border-primary focus:ring-1 focus:ring-primary"
+                      className="h-12 w-full rounded-lg border border-border text-center text-lg font-semibold focus:border-primary focus:ring-1 focus:ring-primary"
                       required
                       disabled={loading}
                       autoFocus={i === 0}
