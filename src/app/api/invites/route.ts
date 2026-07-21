@@ -1,11 +1,13 @@
 import { NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import {
   createInvite,
   findUserByPhone,
   findUserById,
   listInvitesForPhone,
   listInvitesByUser,
-  getGroup,
+  getGroupsByIds,
+  findUsersByIds,
 } from '@/lib/db/store';
 import { getMockSessionUserId } from '@/lib/auth/mock-session';
 
@@ -26,6 +28,8 @@ export async function POST(request: NextRequest) {
       to_phone,
       to_user_id: toUser?.id,
     });
+
+    revalidatePath('/inbox');
 
     return Response.json(invite, { status: 201 });
   } catch (err) {
@@ -58,20 +62,33 @@ export async function GET(request: NextRequest) {
       invites = await listInvitesForPhone(user.phone);
     }
 
-    // Enrich with group names and sender names
-    const enriched = await Promise.all(
-      invites.map(async (invite) => {
-        const group = await getGroup(invite.group_id);
-        const sender = await findUserById(invite.from_user_id);
-        return {
-          ...invite,
-          group_name: group?.name ?? 'Unknown Group',
-          from_user_name: sender?.name ?? 'Unknown',
-        };
-      }),
-    );
+    if (invites.length === 0) {
+      return Response.json([], {
+        headers: { 'Cache-Control': 'private, s-maxage=10' },
+      });
+    }
 
-    return Response.json(enriched);
+    // Batch fetch all groups and senders in 2 queries instead of 2N
+    const groupIds = [...new Set(invites.map((inv) => inv.group_id))];
+    const senderIds = [...new Set(invites.map((inv) => inv.from_user_id))];
+
+    const [groups, senders] = await Promise.all([
+      getGroupsByIds(groupIds),
+      findUsersByIds(senderIds),
+    ]);
+
+    const groupMap = new Map(groups.map((g) => [g.id, g]));
+    const senderMap = new Map(senders.map((s) => [s.id, s]));
+
+    const enriched = invites.map((invite) => ({
+      ...invite,
+      group_name: groupMap.get(invite.group_id)?.name ?? 'Unknown Group',
+      from_user_name: senderMap.get(invite.from_user_id)?.name ?? 'Unknown',
+    }));
+
+    return Response.json(enriched, {
+      headers: { 'Cache-Control': 'private, s-maxage=10' },
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to list invites';
     return Response.json({ error: msg }, { status: 500 });

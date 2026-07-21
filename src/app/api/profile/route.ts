@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { findUserById, updateUserProfile } from '@/lib/db/store';
 import { getMockSessionUserId } from '@/lib/auth/mock-session';
 
@@ -13,7 +14,9 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return Response.json({ error: 'User not found' }, { status: 404 });
     }
-    return Response.json(user);
+    return Response.json(user, {
+      headers: { 'Cache-Control': 'private, s-maxage=60' },
+    });
   } catch (err) {
     return Response.json(
       { error: 'Failed to get profile', details: String(err) },
@@ -48,6 +51,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     const user = await updateUserProfile(userId, updates);
+
+    revalidatePath('/profile');
+
     return Response.json(user);
   } catch (err) {
     return Response.json(

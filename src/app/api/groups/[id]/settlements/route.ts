@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import {
   getGroup,
   getGroupMembers,
@@ -81,6 +82,8 @@ export async function POST(
       note,
     });
 
+    revalidatePath('/groups/' + groupId);
+
     return Response.json(settlement, { status: 201 });
   } catch (err) {
     return Response.json(
@@ -106,7 +109,9 @@ export async function GET(
     }
 
     const settlements = await getGroupSettlements(groupId);
-    return Response.json(settlements);
+    return Response.json(settlements, {
+      headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' },
+    });
   } catch (err) {
     return Response.json(
       { error: 'Failed to list settlements', details: String(err) },

@@ -26,10 +26,14 @@ export async function GET(
 
     if (simplified) {
       const plan = simplifyDebts(balances);
-      return Response.json({ balances, simplified: plan });
+      return Response.json({ balances, simplified: plan }, {
+        headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' },
+      });
     }
 
-    return Response.json({ balances });
+    return Response.json({ balances }, {
+      headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' },
+    });
   } catch (err) {
     return Response.json(
       { error: 'Failed to compute balances', details: String(err) },

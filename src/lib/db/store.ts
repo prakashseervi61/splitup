@@ -117,6 +117,19 @@ export async function getGroup(id: string): Promise<Group | null> {
   return data as Group | null;
 }
 
+export async function getGroupsByIds(
+  ids: string[],
+): Promise<Group[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('groups')
+    .select('id, name')
+    .in('id', ids);
+
+  if (error) throw new Error(`Failed to get groups: ${error.message}`);
+  return (data ?? []) as Group[];
+}
+
 export async function listUserGroups(userId: string): Promise<Group[]> {
   // Get group IDs the user belongs to
   const { data: memberships, error: membershipError } = await supabase
@@ -161,6 +174,68 @@ export async function createGroup(data: {
   return group as Group;
 }
 
+
+export async function updateGroup(
+  id: string,
+  data: { name: string },
+): Promise<Group | null> {
+  const { data: group, error } = await supabase
+    .from('groups')
+    .update({ name: data.name })
+    .eq('id', id)
+    .select()
+    .maybeSingle();
+
+  if (error) throw new Error("Failed to update group: " + error.message);
+  return group as Group | null;
+}
+
+export async function deleteGroup(id: string): Promise<void> {
+  // Delete expense_splits for all expenses in this group
+  const { data: expenseIds } = await supabase
+    .from('expenses')
+    .select('id')
+    .eq('group_id', id);
+  const eids = (expenseIds ?? []).map(e => e.id);
+
+  if (eids.length > 0) {
+    const { error: splitsError } = await supabase
+      .from('expense_splits')
+      .delete()
+      .in('expense_id', eids);
+    if (splitsError) throw new Error("Failed to delete expense splits: " + splitsError.message);
+  }
+
+  const { error: expensesError } = await supabase
+    .from('expenses')
+    .delete()
+    .eq('group_id', id);
+  if (expensesError) throw new Error("Failed to delete expenses: " + expensesError.message);
+
+  const { error: settlementsError } = await supabase
+    .from('settlements')
+    .delete()
+    .eq('group_id', id);
+  if (settlementsError) throw new Error("Failed to delete settlements: " + settlementsError.message);
+
+  const { error: templatesError } = await supabase
+    .from('recurring_templates')
+    .delete()
+    .eq('group_id', id);
+  if (templatesError) throw new Error("Failed to delete templates: " + templatesError.message);
+
+  const { error: membersError } = await supabase
+    .from('group_members')
+    .delete()
+    .eq('group_id', id);
+  if (membersError) throw new Error("Failed to delete group members: " + membersError.message);
+
+  const { error: groupError } = await supabase
+    .from('groups')
+    .delete()
+    .eq('id', id);
+  if (groupError) throw new Error("Failed to delete group: " + groupError.message);
+}
 export async function addGroupMember(
   groupId: string,
   userId: string,
@@ -175,6 +250,21 @@ export async function addGroupMember(
   return data as GroupMember;
 }
 
+export async function addGroupMembersBatch(
+  groupId: string,
+  userIds: string[],
+): Promise<GroupMember[]> {
+  if (userIds.length === 0) return [];
+  const entries = userIds.map((uid) => ({ group_id: groupId, user_id: uid }));
+  const { data, error } = await supabase
+    .from('group_members')
+    .insert(entries)
+    .select();
+
+  if (error) throw new Error(`Failed to add group members: ${error.message}`);
+  return (data ?? []) as GroupMember[];
+}
+
 export async function getGroupMembers(
   groupId: string,
 ): Promise<GroupMember[]> {
@@ -182,6 +272,19 @@ export async function getGroupMembers(
     .from('group_members')
     .select('*')
     .eq('group_id', groupId);
+
+  if (error) throw new Error(`Failed to get members: ${error.message}`);
+  return (data ?? []) as GroupMember[];
+}
+
+export async function getGroupMembersBatch(
+  groupIds: string[],
+): Promise<GroupMember[]> {
+  if (groupIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('*')
+    .in('group_id', groupIds);
 
   if (error) throw new Error(`Failed to get members: ${error.message}`);
   return (data ?? []) as GroupMember[];
@@ -349,6 +452,20 @@ export async function createExpenseSplit(split: ExpenseSplit): Promise<void> {
   if (error) throw new Error(`Failed to create split: ${error.message}`);
 }
 
+export async function createExpenseSplitsBatch(
+  splits: ExpenseSplit[],
+): Promise<void> {
+  if (splits.length === 0) return;
+  const rows = splits.map((s) => ({
+    expense_id: s.expense_id,
+    user_id: s.user_id,
+    share_amount: s.share_amount,
+  }));
+  const { error } = await supabase.from('expense_splits').insert(rows);
+
+  if (error) throw new Error(`Failed to create splits: ${error.message}`);
+}
+
 export async function getExpenseSplits(
   expenseId: string,
 ): Promise<ExpenseSplit[]> {
@@ -356,6 +473,19 @@ export async function getExpenseSplits(
     .from('expense_splits')
     .select('*')
     .eq('expense_id', expenseId);
+
+  if (error) throw new Error(`Failed to get splits: ${error.message}`);
+  return (data ?? []).map((s) => toSplit(s as Record<string, unknown>));
+}
+
+export async function getExpenseSplitsBatch(
+  expenseIds: string[],
+): Promise<ExpenseSplit[]> {
+  if (expenseIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('expense_splits')
+    .select('*')
+    .in('expense_id', expenseIds);
 
   if (error) throw new Error(`Failed to get splits: ${error.message}`);
   return (data ?? []).map((s) => toSplit(s as Record<string, unknown>));

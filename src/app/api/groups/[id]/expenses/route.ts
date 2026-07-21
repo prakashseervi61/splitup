@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import {
   getGroup,
   getGroupMembers,
   createExpense,
-  createExpenseSplit,
+  createExpenseSplitsBatch,
   getGroupExpenses,
-  getExpenseSplits,
+  getExpenseSplitsBatch,
 } from '@/lib/db/store';
 import {
   equalSplit,
@@ -16,14 +17,6 @@ import {
 // ---------------------------------------------------------------------------
 // POST /api/groups/[id]/expenses  —  add an expense
 // ---------------------------------------------------------------------------
-// Body:
-//   { paid_by, amount, description, category, split_method, split_data }
-//
-// split_method: 'equal' | 'custom' | 'percentage'
-// split_data varies:
-//   equal      → (none needed, splits among all group members)
-//   custom     → { "user_id": share_amount, ... }
-//   percentage → { "user_id": pct, ... }
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -48,7 +41,6 @@ export async function POST(
       recurring_frequency,
     } = body;
 
-    // -- validate required fields --
     if (!paid_by || amount == null || !split_method) {
       return Response.json(
         { error: 'paid_by, amount, and split_method are required' },
@@ -65,10 +57,7 @@ export async function POST(
 
     if (!['equal', 'custom', 'percentage'].includes(split_method)) {
       return Response.json(
-        {
-          error:
-            'split_method must be one of: equal, custom, percentage',
-        },
+        { error: 'split_method must be one of: equal, custom, percentage' },
         { status: 400 },
       );
     }
@@ -76,7 +65,6 @@ export async function POST(
     const members = await getGroupMembers(groupId);
     const memberIds = members.map((m) => m.user_id);
 
-    // -- generate splits --
     let splits;
     switch (split_method) {
       case 'equal': {
@@ -98,13 +86,10 @@ export async function POST(
             { status: 400 },
           );
         }
-        // Validate total matches amount
         const total = splits.reduce((s, sp) => s + sp.share_amount, 0);
         if (Math.abs(total - amount) > 0.01) {
           return Response.json(
-            {
-              error: `Custom shares (${total.toFixed(2)}) must equal amount (${amount.toFixed(2)})`,
-            },
+            { error: `Custom shares (${total.toFixed(2)}) must equal amount (${amount.toFixed(2)})` },
             { status: 400 },
           );
         }
@@ -134,7 +119,6 @@ export async function POST(
         );
     }
 
-    // -- create expense --
     const expense = await createExpense({
       group_id: groupId,
       paid_by,
@@ -145,10 +129,11 @@ export async function POST(
       recurring_frequency,
     });
 
-    // -- create splits --
-    for (const split of splits) {
-      await createExpenseSplit({ ...split, expense_id: expense.id });
-    }
+    await createExpenseSplitsBatch(
+      splits.map((s) => ({ ...s, expense_id: expense.id })),
+    );
+
+    revalidatePath('/groups/' + groupId);
 
     return Response.json(
       {
@@ -166,30 +151,51 @@ export async function POST(
 }
 
 // ---------------------------------------------------------------------------
-// GET /api/groups/[id]/expenses  —  list group expenses with splits
+// GET /api/groups/[id]/expenses  —  list group expenses with pagination
+// Query params: ?limit=20&before=<ISO timestamp>
 // ---------------------------------------------------------------------------
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: groupId } = await params;
+    const { searchParams } = new URL(request.url);
+    const limit = Math.min(parseInt(searchParams.get('limit') ?? '50', 10), 100);
+    const before = searchParams.get('before');
 
     const group = await getGroup(groupId);
     if (!group) {
       return Response.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    const expenses = await getGroupExpenses(groupId);
+    let expenses = await getGroupExpenses(groupId);
 
-    const result = await Promise.all(
-      expenses.map(async (exp) => ({
-        ...exp,
-        splits: await getExpenseSplits(exp.id),
-      })),
-    );
+    if (before) {
+      const beforeDate = new Date(before);
+      expenses = expenses.filter((e) => new Date(e.created_at) < beforeDate);
+    }
 
-    return Response.json(result);
+    expenses = expenses.slice(0, limit);
+
+    const expenseIds = expenses.map((exp) => exp.id);
+    const allSplits = await getExpenseSplitsBatch(expenseIds);
+
+    const splitsByExpense = new Map<string, typeof allSplits>();
+    for (const split of allSplits) {
+      const list = splitsByExpense.get(split.expense_id) ?? [];
+      list.push(split);
+      splitsByExpense.set(split.expense_id, list);
+    }
+
+    const result = expenses.map((exp) => ({
+      ...exp,
+      splits: splitsByExpense.get(exp.id) ?? [],
+    }));
+
+    return Response.json(result, {
+      headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' },
+    });
   } catch (err) {
     return Response.json(
       { error: 'Failed to list expenses', details: String(err) },

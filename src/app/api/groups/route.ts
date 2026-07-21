@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import {
   createGroup,
-  addGroupMember,
-  getGroupMembers,
+  addGroupMembersBatch,
+  getGroupMembersBatch,
   listUserGroups,
   createUser,
   findUserByPhone,
@@ -18,7 +19,6 @@ import { checkRateLimit } from '@/lib/rate-limit';
 //   newMembers optional array of { phone, name } to create+add on the fly
 export async function POST(request: NextRequest) {
   try {
-    // Rate limit: 5 groups per user per hour
     const body = await request.json();
     const { name, type, created_by, members, newMembers } = body;
     if (created_by) {
@@ -55,33 +55,44 @@ export async function POST(request: NextRequest) {
 
     const group = await createGroup({ name, type, created_by });
 
-    // Add creator
-    await addGroupMember(group.id, created_by);
+    // Collect all member IDs to add in a single batch
+    const memberIds: string[] = [created_by];
 
-    // Add existing members by ID
     if (Array.isArray(members)) {
       for (const userId of members) {
-        if (userId !== created_by) {
-          await addGroupMember(group.id, userId);
+        if (userId !== created_by && !memberIds.includes(userId)) {
+          memberIds.push(userId);
         }
       }
     }
 
-    // Create and add new members by phone
     if (Array.isArray(newMembers)) {
-      for (const nm of newMembers) {
-        let user = nm.phone ? await findUserByPhone(nm.phone) : null;
-        if (!user && nm.name && nm.phone) {
-          user = await createUser({ phone: nm.phone, name: nm.name });
-        }
-        if (user && user.id !== created_by) {
-          await addGroupMember(group.id, user.id);
+      // Resolve new members in parallel
+      const resolved = await Promise.all(
+        newMembers.map(async (nm: { phone?: string; name?: string }) => {
+          let user = nm.phone ? await findUserByPhone(nm.phone) : null;
+          if (!user && nm.name && nm.phone) {
+            user = await createUser({ phone: nm.phone, name: nm.name });
+          }
+          return user;
+        }),
+      );
+      for (const user of resolved) {
+        if (user && user.id !== created_by && !memberIds.includes(user.id)) {
+          memberIds.push(user.id);
         }
       }
     }
+
+    // Single batch insert for all members
+    await addGroupMembersBatch(group.id, memberIds);
+
+    const membersResult = await getGroupMembersBatch([group.id]);
+
+    revalidatePath('/dashboard');
 
     return Response.json(
-      { ...group, members: await getGroupMembers(group.id) },
+      { ...group, members: membersResult },
       { status: 201 },
     );
   } catch (err) {
@@ -108,16 +119,32 @@ export async function GET(request: NextRequest) {
     }
 
     const groups = await listUserGroups(userId);
+    if (groups.length === 0) {
+      return Response.json([], {
+        headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
+      });
+    }
 
-    // Attach member info to each group
-    const result = await Promise.all(
-      groups.map(async (g) => ({
-        ...g,
-        members: await getGroupMembers(g.id),
-      })),
-    );
+    // Batch fetch all members in one query
+    const groupIds = groups.map((g) => g.id);
+    const allMembers = await getGroupMembersBatch(groupIds);
 
-    return Response.json(result);
+    // Group members by group_id for attachment
+    const membersByGroup = new Map<string, typeof allMembers>();
+    for (const m of allMembers) {
+      const list = membersByGroup.get(m.group_id) ?? [];
+      list.push(m);
+      membersByGroup.set(m.group_id, list);
+    }
+
+    const result = groups.map((g) => ({
+      ...g,
+      members: membersByGroup.get(g.id) ?? [],
+    }));
+
+    return Response.json(result, {
+      headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
+    });
   } catch (err) {
     return Response.json(
       { error: 'Failed to list groups', details: String(err) },

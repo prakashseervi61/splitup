@@ -1,17 +1,18 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import Modal from "@/components/ui/Modal";
 import { useUser } from "@/lib/user-context";
 
 interface CreateGroupFormProps {
   open: boolean;
   onClose: () => void;
-  onCreated: () => void;
   userId: string;
 }
 
-export default function CreateGroupForm({ open, onClose, onCreated, userId }: CreateGroupFormProps) {
+export default function CreateGroupForm({ open, onClose, userId }: CreateGroupFormProps) {
+  const router = useRouter();
   const { cacheUsers } = useUser();
   const [name, setName] = useState("");
   const [type, setType] = useState<"pg" | "hostel" | "trip">("pg");
@@ -49,7 +50,6 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
     setError("");
 
     try {
-      // ponytail: deterministic phone from name so the same person reuses the same user record
       const newMembers = memberNames.map((n) => ({
         name: n,
         phone: `+91-${n.toLowerCase().replace(/\s+/g, "")}@splitup`,
@@ -73,7 +73,6 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
         return;
       }
 
-      // Cache user names for new members via batch API
       const allIds = (data.members as { user_id: string }[]).map((m) => m.user_id);
       if (allIds.length > 0) {
         fetch(`/api/users/batch?ids=${allIds.join(',')}`)
@@ -84,7 +83,7 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
 
       reset();
       onClose();
-      onCreated();
+      router.refresh();
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -95,7 +94,6 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
   return (
     <Modal open={open} onClose={onClose} title="Create Group">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Group Name */}
         <div>
           <label className="mb-1 block text-sm font-medium text-text-body">
             Group Name
@@ -109,7 +107,6 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
           />
         </div>
 
-        {/* Group Type */}
         <div>
           <label className="mb-1 block text-sm font-medium text-text-body">
             Group Type
@@ -132,7 +129,6 @@ export default function CreateGroupForm({ open, onClose, onCreated, userId }: Cr
           </div>
         </div>
 
-        {/* Members */}
         <div>
           <label className="mb-1 block text-sm font-medium text-text-body">
             Members

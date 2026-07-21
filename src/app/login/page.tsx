@@ -271,7 +271,7 @@ function LoginPageInner() {
                   Phone Number
                 </label>
                 <div className="mt-1 flex">
-                  <span className="inline-flex items-center rounded-l-lg border border-r-0 border-border bg-surface-secondary px-3 text-sm text-text-muted">
+                  <span className="inline-flex items-center rounded-l-lg border border-r-0 border-border/60 bg-surface-secondary px-3 text-sm text-text-muted">
                     +91
                   </span>
                   <input
@@ -279,7 +279,7 @@ function LoginPageInner() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     placeholder="9876543210"
-                    className="block w-full rounded-r-lg border border-border px-3 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                    className="block w-full rounded-r-lg border border-border/60 px-3 py-2.5 text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/50"
                     required
                     disabled={loading}
                     autoFocus
@@ -336,7 +336,7 @@ function LoginPageInner() {
                       value={digit}
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                      className="h-12 w-full rounded-lg border border-border text-center text-lg font-semibold focus:border-primary focus:ring-1 focus:ring-primary"
+                      className="h-12 w-full rounded-lg border border-border/60 text-center text-lg font-semibold focus:border-primary focus:ring-1 focus:ring-primary"
                       required
                       disabled={loading}
                       autoFocus={i === 0}

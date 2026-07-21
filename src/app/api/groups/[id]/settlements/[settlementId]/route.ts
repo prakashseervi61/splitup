@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import {
   getGroup,
   updateSettlementStatus,
@@ -42,6 +43,9 @@ export async function PATCH(
     }
 
     const updated = await updateSettlementStatus(settlementId, status);
+
+    revalidatePath('/groups/' + groupId);
+
     return Response.json(updated);
   } catch (err) {
     return Response.json(

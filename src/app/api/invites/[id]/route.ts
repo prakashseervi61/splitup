@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { updateInviteStatus } from '@/lib/db/store';
 import { getMockSessionUserId } from '@/lib/auth/mock-session';
 
@@ -23,6 +24,8 @@ export async function PATCH(
     if (!invite) {
       return Response.json({ error: 'Invite not found' }, { status: 404 });
     }
+
+    revalidatePath('/inbox');
 
     return Response.json(invite);
   } catch (err) {
