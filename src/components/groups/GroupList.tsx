@@ -27,7 +27,7 @@ export default function GroupList({ groups, userId }: GroupListProps) {
     <div className="flex min-h-full flex-col">
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 sm:px-6">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-text-heading">Your Groups</h1>
+          <h1 className="text-2xl font-bold text-text-heading" data-walkthrough="groups">Your Groups</h1>
           <p className="mt-1 text-sm text-text-muted">
             Manage expenses, track balances, and settle up with one tap.
           </p>
@@ -42,6 +42,7 @@ export default function GroupList({ groups, userId }: GroupListProps) {
             <button
               onClick={() => setShowCreate(true)}
               className="mt-6 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
+              data-walkthrough="create-group"
             >
               Create Your First Group
             </button>
@@ -61,6 +62,7 @@ export default function GroupList({ groups, userId }: GroupListProps) {
             <button
               onClick={() => setShowCreate(true)}
               className="flex items-center justify-center rounded-xl border-2 border-dashed border-border p-5 text-sm font-medium text-text-muted transition-colors hover:border-primary hover:text-primary"
+              data-walkthrough="create-group"
             >
               <div className="flex flex-col items-center gap-2">
                 <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

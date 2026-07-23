@@ -687,3 +687,27 @@ export async function computeBalances(
   // Use the pure compute function from split.ts
   return computeNetBalances('', expenses, allSplits, settlements);
 }
+
+// ---------------------------------------------------------------------------
+// Onboarding
+// ---------------------------------------------------------------------------
+
+export async function getOnboardingStatus(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("onboarding_completed")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to get onboarding status: ${error.message}`);
+  return data?.onboarding_completed ?? false;
+}
+
+export async function setOnboardingCompleted(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("users")
+    .update({ onboarding_completed: true })
+    .eq("id", userId);
+
+  if (error) throw new Error(`Failed to update onboarding: ${error.message}`);
+}

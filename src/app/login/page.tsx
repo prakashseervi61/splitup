@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { SplitArrowIcon, PhoneOtpIcon, GroupPeopleIcon, RupeeCircleIcon, SettleCheckIcon } from '@/components/ui/icons';
 
 type Step = 'phone' | 'otp' | 'name';
 
@@ -236,6 +237,7 @@ function LoginPageInner() {
       <div className="w-full max-w-sm">
         {/* Branding */}
         <div className="mb-10 mt-8 text-center animate-fade-up">
+          <SplitArrowIcon className="mx-auto mb-4 w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-primary" />
           <h1 className="font-display text-3xl font-bold tracking-tight text-text-heading">
             Splitup
           </h1>
@@ -270,7 +272,8 @@ function LoginPageInner() {
                 <label className="block text-sm font-medium text-text-body">
                   Phone Number
                 </label>
-                <div className="mt-1 flex">
+                <div className="mt-1 flex items-center">
+                  <PhoneOtpIcon size={18} className="mr-2 text-text-muted shrink-0" />
                   <span className="inline-flex items-center rounded-l-lg border border-r-0 border-border/60 bg-surface-secondary px-3 text-sm text-text-muted">
                     +91
                   </span>
@@ -450,6 +453,22 @@ function LoginPageInner() {
                 )}
               </button>
             </form>
+          </div>
+        </div>
+
+        {/* Micro-feature strip */}
+        <div className="mt-6 flex items-center justify-center gap-4 sm:gap-6">
+          <div className="flex flex-col items-center gap-1">
+            <GroupPeopleIcon className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-text-muted" />
+            <span className="text-[11px] md:text-xs lg:text-[13px] text-text-muted">Split with roommates</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <RupeeCircleIcon className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-text-muted" />
+            <span className="text-[11px] md:text-xs lg:text-[13px] text-text-muted">Track expenses</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <SettleCheckIcon className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-text-muted" />
+            <span className="text-[11px] md:text-xs lg:text-[13px] text-text-muted">Settle instantly</span>
           </div>
         </div>
       </div>

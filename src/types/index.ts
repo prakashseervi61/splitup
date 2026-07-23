@@ -3,13 +3,14 @@ export interface User {
   phone: string;
   name: string;
   default_vpa: string;
+  onboarding_completed: boolean;
   created_at: string;
 }
 
 export interface Group {
   id: string;
   name: string;
-  type: 'pg' | 'hostel' | 'trip';
+  type: "pg" | "hostel" | "trip";
   created_by: string;
   created_at: string;
 }
@@ -29,7 +30,7 @@ export interface Expense {
   category: string;
   created_at: string;
   is_recurring: boolean;
-  recurring_frequency?: 'monthly' | 'weekly' | 'daily';
+  recurring_frequency?: "monthly" | "weekly" | "daily";
 }
 
 export interface ExpenseSplit {
@@ -44,7 +45,7 @@ export interface Settlement {
   from_user: string;
   to_user: string;
   amount: number;
-  status: 'pending' | 'confirmed' | 'disputed';
+  status: "pending" | "confirmed" | "disputed";
   note: string;
   created_at: string;
   settled_at?: string;
@@ -57,7 +58,7 @@ export interface RecurringTemplate {
   description: string;
   amount: number;
   category: string;
-  split_type: 'equal' | 'custom' | 'percentage';
+  split_type: "equal" | "custom" | "percentage";
   split_data: Record<string, number>;
   day_of_month: number;
   is_active: boolean;
@@ -71,6 +72,6 @@ export interface Invite {
   from_user_id: string;
   to_phone: string;
   to_user_id: string | null;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
   created_at: string;
 }
