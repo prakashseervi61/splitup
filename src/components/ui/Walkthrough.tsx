@@ -235,7 +235,7 @@ export default function Walkthrough({
   const cfg = STEPS[stepIndices[effectiveStep]];
 
   return createPortal(
-    <div className="fixed inset-0" style={{ zIndex: 9999 }}>
+    <div className="fixed inset-0" style={{ zIndex: 9999, pointerEvents: "none" }}>
       {/* Semi-transparent overlay with cutout */}
       {spotlightPath && (
         <svg
@@ -319,7 +319,18 @@ function DesktopTooltip({
   // Position tooltip relative to target
   const [pos, setPos] = useState({ left: 0, top: 0, arrow: "" });
   useEffect(() => {
-    if (!tooltipRef.current || !targetRect) return;
+    if (!tooltipRef.current) return;
+    if (!targetRect) {
+      const t = tooltipRef.current;
+      const tw = t.offsetWidth || 300;
+      const th = t.offsetHeight || 200;
+      setPos({
+        left: Math.max(16, (vp.w - tw) / 2),
+        top: Math.max(16, (vp.h - th) / 2),
+        arrow: "",
+      });
+      return;
+    }
     const t = tooltipRef.current;
     const tw = t.offsetWidth || 300;
     const th = t.offsetHeight || 200;
@@ -354,6 +365,7 @@ function DesktopTooltip({
       ref={tooltipRef}
       className="fixed w-72 bg-white rounded-xl shadow-2xl z-10 transition-all duration-300"
       style={{
+        pointerEvents: "auto",
         left: pos.left,
         top: pos.top,
         opacity: pos.left === 0 && pos.top === 0 ? 0 : 1,
@@ -456,6 +468,7 @@ function MobileBottomSheet({
     <div
       className="fixed left-0 right-0 bottom-0 z-10 transition-transform duration-400"
       style={{
+        pointerEvents: "auto",
         transform: visible ? "translateY(0%)" : "translateY(100%)",
         transitionTimingFunction: "cubic-bezier(0.32, 0.72, 0, 1)",
         transitionProperty: reduced ? "none" as any : "transform",
