@@ -14,7 +14,8 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
   const router = useRouter();
   const isLanding = pathname === '/';
   const isLoginPage = pathname === '/login';
-  const [user, setUser] = useState<User | null>(initialUser);
+  const [user, setUser] = useState<User | null | undefined>(undefined);
+  const [hydrated, setHydrated] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [inviteCount, setInviteCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -24,8 +25,14 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
   useEffect(() => {
     fetch('/api/auth/me')
       .then(res => (res.ok ? res.json() : null))
-      .then(data => setUser(data && !data.error ? data : null))
-      .catch(() => setUser(null));
+      .then(data => {
+        setUser(data && !data.error ? data : null);
+        setHydrated(true);
+      })
+      .catch(() => {
+        setUser(null);
+        setHydrated(true);
+      });
   }, []);
 
   useEffect(() => {
@@ -81,7 +88,9 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-2 text-sm md:flex">
-          {user ? (
+          {!hydrated ? (
+            <div className="h-9 w-48 bg-gray-100 rounded-lg animate-pulse" />
+          ) : user ? (
             <div className="flex items-center gap-1">
               <Link
                 href="/dashboard"
@@ -95,7 +104,7 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
               >
                 Invite
                 {inviteCount > 0 && (
-                  <span className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  <span className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 font-bold text-white" style={{ fontSize: "10px" }}>
                     {inviteCount > 9 ? '9+' : inviteCount}
                   </span>
                 )}
@@ -145,21 +154,21 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
         </nav>
 
         {/* Mobile hamburger button (logged-in users OR landing page) */}
-        {(user || (!user && isLanding)) && (
+        {(hydrated && (user || (!user && isLanding))) && (
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="relative flex h-11 w-11 items-center justify-center rounded-lg text-text-body transition-colors hover:bg-surface-secondary md:hidden"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={menuOpen}
           >
-            <span className="absolute h-0.5 w-5 rounded bg-current transition-all duration-[250ms] ease-in-out" style={{ transform: menuOpen ? 'rotate(45deg)' : 'translateY(-4px)' }} />
-            <span className="absolute h-0.5 w-5 rounded bg-current transition-all duration-[250ms] ease-in-out" style={{ opacity: menuOpen ? 0 : 1 }} />
-            <span className="absolute h-0.5 w-5 rounded bg-current transition-all duration-[250ms] ease-in-out" style={{ transform: menuOpen ? 'rotate(-45deg)' : 'translateY(4px)' }} />
+            <span className="absolute h-0.5 w-5 rounded bg-current transition-all ease-in-out" style={{ transitionDuration: "250ms", transform: menuOpen ? 'rotate(45deg)' : 'translateY(-4px)' }} />
+            <span className="absolute h-0.5 w-5 rounded bg-current transition-all ease-in-out" style={{ transitionDuration: "250ms", opacity: menuOpen ? 0 : 1 }} />
+            <span className="absolute h-0.5 w-5 rounded bg-current transition-all ease-in-out" style={{ transitionDuration: "250ms", transform: menuOpen ? 'rotate(-45deg)' : 'translateY(4px)' }} />
           </button>
         )}
 
         {/* Mobile sign-in button (non-landing pages, non-logged-in) */}
-        {!user && !isLanding && (
+        {hydrated && !user && !isLanding && (
           <Link
             href="/login"
             className="rounded-lg border border-border px-3 py-2.5 text-sm text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading md:hidden"
@@ -169,7 +178,7 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
         )}
 
         {/* Mobile menu panel — logged-in users */}
-        {user && (
+        {hydrated && user && (
           <div
             ref={menuRef}
             className={`absolute left-0 top-14 w-full overflow-hidden border-b border-border bg-white shadow-lg transition-all duration-[250ms] ease-in-out md:hidden ${
@@ -191,7 +200,7 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
               >
                 Invite
                 {inviteCount > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 font-bold text-white" style={{ fontSize: "10px" }}>
                     {inviteCount > 9 ? '9+' : inviteCount}
                   </span>
                 )}
@@ -214,7 +223,7 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
         )}
 
         {/* Mobile menu panel — landing page, not logged in */}
-        {isLanding && !user && (
+        {hydrated && isLanding && !user && (
           <div
             ref={menuRef}
             className={`absolute left-0 top-14 w-full overflow-hidden border-b border-border bg-white shadow-lg transition-all duration-[250ms] ease-in-out md:hidden ${

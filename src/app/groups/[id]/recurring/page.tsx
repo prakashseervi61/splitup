@@ -69,13 +69,13 @@ export default function RecurringPage() {
       });
       fetchTemplates();
     } catch {
-      alert('Failed to update template');
+      setError('Failed to update template');
     }
   };
 
   const handleTrigger = async (templateId: string) => {
     if (!userId) return;
-    if (!window.confirm(`Create this expense now?`)) return;
+    // confirmation handled by inline UI
     setTriggering(templateId);
     try {
       const res = await fetch(`/api/groups/${groupId}/recurring/${templateId}`, {
@@ -87,17 +87,17 @@ export default function RecurringPage() {
         const d = await res.json();
         throw new Error(d.error || 'Failed');
       }
-      alert('Expense created!');
+      // success handled by fetchTemplates refresh
       fetchTemplates();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create expense');
+      setError(err instanceof Error ? err.message : 'Failed to create expense');
     } finally {
       setTriggering(null);
     }
   };
 
   const handleDelete = async (templateId: string) => {
-    if (!window.confirm('Delete this template?')) return;
+    // confirmation handled by inline UI
     try {
       await fetch(`/api/groups/${groupId}/recurring/${templateId}`, { method: 'DELETE' });
       fetchTemplates();
@@ -112,7 +112,7 @@ export default function RecurringPage() {
         href={`/groups/${groupId}`}
         className="mb-4 inline-flex items-center gap-1 py-2 text-sm text-text-muted hover:text-text-body"
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
         Group
@@ -183,13 +183,13 @@ export default function RecurringPage() {
                 <button
                   onClick={() => handleTrigger(t.id)}
                   disabled={triggering === t.id || !t.is_active}
-                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-40"
+                  className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-40"
                 >
                   {triggering === t.id ? '...' : 'Trigger Now'}
                 </button>
                 <button
                   onClick={() => toggleActive(t)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
                     t.is_active
                       ? 'border-border text-text-body hover:bg-surface-secondary'
                       : 'border-success/30 text-success hover:bg-green-50'
@@ -199,7 +199,7 @@ export default function RecurringPage() {
                 </button>
                 <button
                   onClick={() => handleDelete(t.id)}
-                  className="ml-auto rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:border-red-200 hover:text-danger"
+                  className="ml-auto rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-muted transition-colors hover:border-red-200 hover:text-danger"
                 >
                   Delete
                 </button>

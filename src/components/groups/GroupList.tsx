@@ -25,7 +25,7 @@ export default function GroupList({ groups, userId }: GroupListProps) {
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 sm:px-6">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-8 pb-24 sm:pb-8 sm:px-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-text-heading" data-walkthrough="groups">Your Groups</h1>
           <p className="mt-1 text-sm text-text-muted">
@@ -65,7 +65,7 @@ export default function GroupList({ groups, userId }: GroupListProps) {
               data-walkthrough="create-group"
             >
               <div className="flex flex-col items-center gap-2">
-                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
                 <span>Create Group</span>
@@ -79,7 +79,7 @@ export default function GroupList({ groups, userId }: GroupListProps) {
             onClick={() => setShowCreate(true)}
             className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-colors hover:bg-primary-dark sm:hidden"
           >
-            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </button>

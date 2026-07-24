@@ -30,16 +30,8 @@ interface AddExpenseFormProps {
 
 type SplitMethod = 'equal' | 'custom' | 'percentage';
 
-const CATEGORIES = [
-  'Food',
-  'Rent',
-  'Groceries',
-  'Utilities',
-  'Transport',
-  'Shopping',
-  'Entertainment',
-  'Other',
-];
+import { CATEGORIES } from '@/lib/constants';
+
 
 export default function AddExpenseForm({
   open,
@@ -222,13 +214,13 @@ export default function AddExpenseForm({
 
         <div>
           <label className="mb-1 block text-sm font-medium text-text-body">Split Method</label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {(['equal', 'custom', 'percentage'] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setSplitMethod(m)}
-                className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                   splitMethod === m
                     ? 'border-primary bg-primary-subtle text-primary'
                     : 'border-border text-text-body hover:border-divider'

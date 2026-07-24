@@ -44,6 +44,7 @@ export default function SettleFlow({
   const [showQr, setShowQr] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [confirmStep, setConfirmStep] = useState(false);
 
   const [counterDisplay, setCounterDisplay] = useState(amount);
   const counterRef = useRef<number>(amount);
@@ -59,6 +60,7 @@ export default function SettleFlow({
     setShowQr(false);
     setLoading(false);
     setError("");
+    setConfirmStep(false);
     setCounterDisplay(amount);
     counterRef.current = amount;
     animatingRef.current = false;
@@ -111,10 +113,11 @@ export default function SettleFlow({
     }
   };
 
-  // Step 2 — confirm payment with settle ripple animation
   const handleConfirmPayment = async () => {
     if (!settlementId) return;
-    if (!window.confirm(`Did you pay ₹${amount.toFixed(2)} to ${toName}?`)) {
+
+    if (!confirmStep) {
+      setConfirmStep(true);
       return;
     }
 
@@ -139,21 +142,18 @@ export default function SettleFlow({
 
       setStatus("confirmed");
 
-      // Phase 2: green flash sweep
       if (flashRef.current) {
         flashRef.current.style.transform = "translateX(100%)";
         flashRef.current.style.transition = "transform 0.4s ease-out";
       }
 
-      // Phase 2: counter animation via requestAnimationFrame
       const startVal = amount;
-      const duration = 400; // ms
+      const duration = 400;
       const startTime = performance.now();
 
       const animateCounter = (now: number) => {
         const elapsed = now - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        // ease-out quad
         const eased = 1 - (1 - progress) * (1 - progress);
         const current = startVal * (1 - eased);
         setCounterDisplay(current);
@@ -308,13 +308,36 @@ export default function SettleFlow({
             </p>
           )}
 
-          <button
-            onClick={handleConfirmPayment}
-            disabled={loading}
-            className="animate-settle-ripple w-full rounded-xl bg-success px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-          >
-            {loading ? "✓" : "I've Paid"}
-          </button>
+          {!confirmStep ? (
+            <button
+              onClick={handleConfirmPayment}
+              disabled={loading}
+              className="animate-settle-ripple w-full rounded-xl bg-success px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+            >
+              I&apos;ve Paid
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-center text-sm text-text-body">
+                Confirm you paid ₹{amount.toFixed(2)} to {toName}?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setConfirmStep(false)}
+                  className="flex-1 rounded-xl border border-border px-4 py-3 text-sm font-medium text-text-body transition-colors hover:bg-surface-secondary"
+                >
+                  Go Back
+                </button>
+                <button
+                  onClick={handleConfirmPayment}
+                  disabled={loading}
+                  className="flex-1 animate-settle-ripple rounded-xl bg-success px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                >
+                  {loading ? "✓" : "Yes, Confirmed"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

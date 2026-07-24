@@ -7,6 +7,8 @@ import { useUser } from '@/lib/user-context';
 import GroupTabs from './GroupTabs';
 import InviteMemberModal from './InviteMemberModal';
 import SettleFlow from '@/components/settlements/SettleFlow';
+import Walkthrough from '@/components/ui/Walkthrough';
+import { STORAGE_KEYS } from '@/lib/constants';
 
 interface ExpenseSplit {
   user_id: string;
@@ -62,11 +64,8 @@ interface GroupDetailClientProps {
   userId: string;  users?: Record<string, { id: string; name: string; phone: string; default_vpa: string }>;
 }
 
-const typeConfig = {
-  pg: { label: 'PG', color: 'bg-primary-subtle text-primary' },
-  hostel: { label: 'Hostel', color: 'bg-amber-50 text-warning' },
-  trip: { label: 'Trip', color: 'bg-green-50 text-success' },
-};
+import { typeConfig } from '@/lib/constants';
+
 
 export default function GroupDetailClient({
     users = {},
@@ -76,7 +75,8 @@ export default function GroupDetailClient({
   simplified,
   settlements,
   userId,
-}: GroupDetailClientProps) {
+  userName,
+}: GroupDetailClientProps & { userName?: string }) {
   const router = useRouter();
   const { getUserName, getUserVpa, cacheUsers } = useUser();
   const [showInvite, setShowInvite] = useState(false);
@@ -89,12 +89,14 @@ export default function GroupDetailClient({
   const [currentSimplified, setCurrentSimplified] = useState(simplified);
   const [currentSettlements, setCurrentSettlements] = useState(settlements);
 
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showRename, setShowRename] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [renameValue, setRenameValue] = useState(group.name);
   const [renameError, setRenameError] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [optimisticName, setOptimisticName] = useOptimistic(
@@ -119,6 +121,15 @@ export default function GroupDetailClient({
       cacheUsers(users);
     }
   }, [users, cacheUsers]);
+
+  // Phase 2 walkthrough: show after creating first group
+  useEffect(() => {
+    const createDone = localStorage.getItem(STORAGE_KEYS.WALKTHROUGH_CREATE_DONE) === 'true';
+    const onboardingDone = localStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED) === 'true';
+    if (createDone && !onboardingDone) {
+      setShowWalkthrough(true);
+    }
+  }, []);
 
   const refreshData = async () => {
     const [balRes, settRes] = await Promise.all([
@@ -202,8 +213,8 @@ export default function GroupDetailClient({
 
       {/* Group Header */}
       <div className="mb-6">
-        <div className="relative flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-text-heading">{optimisticName}</h1>
+        <div className="relative flex flex-wrap items-center gap-3">
+          <h1 className="min-w-0 flex-1 truncate text-2xl font-bold text-text-heading">{optimisticName}</h1>
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${t.color}`}>
             {t.label}
           </span>
@@ -212,7 +223,7 @@ export default function GroupDetailClient({
               onClick={() => setShowMenu(!showMenu)}
               className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-secondary hover:text-text-body"
             >
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </button>
@@ -248,13 +259,13 @@ export default function GroupDetailClient({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-1.5">
+        <div className="mt-3 flex flex-wrap items-center gap-1">
           {members.map((m) => (
             <span
               key={m.user_id}
-              className="inline-flex items-center gap-1.5 rounded-full bg-surface-secondary px-3 py-1 text-xs font-medium text-text-body"
+              className="inline-flex items-center gap-1 rounded-full bg-surface-secondary px-2.5 py-0.5 text-xs font-medium text-text-body"
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-subtle text-[10px] font-bold text-primary">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary-subtle text-[9px] font-bold text-primary">
                 {getUserName(m.user_id).charAt(0).toUpperCase()}
               </span>
               {getUserName(m.user_id)}
@@ -284,10 +295,10 @@ export default function GroupDetailClient({
               style={{
                 color:
                   userBalance > 0
-                    ? '#15803D'
+                    ? 'var(--color-success)'
                     : userBalance < 0
-                      ? '#B91C1C'
-                      : '#9CA3AF',
+                      ? 'var(--color-danger)'
+                      : 'var(--color-text-muted)',
               }}
             >
               {userBalance > 0 ? '+' : ''}₹{Math.abs(userBalance).toFixed(2)}
@@ -303,6 +314,7 @@ export default function GroupDetailClient({
           {hasUserDebts && (
             <button
               onClick={handleSettleAll}
+              data-walkthrough="settle-now"
               className="animate-settle-ripple rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark active:bg-primary-active"
             >
               Settle Now
@@ -326,6 +338,7 @@ export default function GroupDetailClient({
         members={members}
         userId={userId}
         onRefresh={refreshData}
+        refreshing={refreshing}
       />
 
       {/* Settle Flow Modal */}
@@ -423,6 +436,15 @@ export default function GroupDetailClient({
       {/* Click-away handler for three-dot menu */}
       {showMenu && (
         <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+      )}
+
+      {showWalkthrough && (
+        <Walkthrough
+          userId={userId}
+          userName={userName}
+          phase="use-features"
+          onComplete={() => setShowWalkthrough(false)}
+        />
       )}
     </div>
   );

@@ -7,11 +7,8 @@ interface GroupCardProps {
   memberCount: number;
 }
 
-const typeConfig = {
-  pg: { label: "PG", color: "bg-primary-subtle text-primary" },
-  hostel: { label: "Hostel", color: "bg-amber-50 text-warning" },
-  trip: { label: "Trip", color: "bg-green-50 text-success" },
-};
+import { typeConfig } from '@/lib/constants';
+
 
 export default function GroupCard({ id, name, type, memberCount }: GroupCardProps) {
   const t = typeConfig[type];

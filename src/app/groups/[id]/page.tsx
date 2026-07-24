@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { getSession } from '@/lib/auth/session';
 import { redirect, notFound } from 'next/navigation';
 import {
@@ -12,6 +13,7 @@ import {
 } from '@/lib/db/store';
 import { simplifyDebts } from '@/lib/utils/split';
 import GroupDetailClient from '@/components/groups/GroupDetailClient';
+import GroupDetailSkeleton from '@/components/groups/GroupDetailSkeleton';
 
 function collectUserIds(
   members: { user_id: string }[],
@@ -31,7 +33,7 @@ function collectUserIds(
   return [...set];
 }
 
-export default async function GroupDetailPage({
+async function GroupDetailContent({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -87,7 +89,20 @@ export default async function GroupDetailPage({
       simplified={simplified}
       settlements={settlements}
       userId={session.user.id}
+      userName={session.user.name}
       users={userMap}
     />
+  );
+}
+
+export default function GroupDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={<GroupDetailSkeleton />}>
+      <GroupDetailContent params={params} />
+    </Suspense>
   );
 }

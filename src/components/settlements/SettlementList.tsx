@@ -29,10 +29,8 @@ const statusConfig = {
   disputed: { label: "Disputed", dot: "bg-red-400", bg: "bg-red-50" },
 };
 
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-}
+import { formatDate } from '@/lib/constants';
+
 
 export default function SettlementList({ settlements, loading, error, groupId, onRefresh }: SettlementListProps) {
   const { getUserName, getUserVpa } = useUser();
@@ -121,7 +119,7 @@ export default function SettlementList({ settlements, loading, error, groupId, o
                       {getUserName(s.from_user)} → {getUserName(s.to_user)}
                     </p>
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-text-muted">
-                      <span>{formatDate(s.created_at)}</span>
+                      <span>{formatDate(s.created_at, true)}</span>
                       {s.note && <><span className="text-border">·</span><span className="truncate">{s.note}</span></>}
                     </div>
                   </div>

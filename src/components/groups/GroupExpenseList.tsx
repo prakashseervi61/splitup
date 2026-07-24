@@ -31,32 +31,9 @@ interface GroupExpenseListProps {
   onRefresh: () => void;
 }
 
-const categoryDots: Record<string, string> = {
-  Food: 'bg-orange-400',
-  Rent: 'bg-violet-400',
-  Groceries: 'bg-lime-500',
-  Utilities: 'bg-cyan-400',
-  Transport: 'bg-yellow-500',
-  Shopping: 'bg-pink-400',
-  Entertainment: 'bg-purple-400',
-  Other: 'bg-gray-400',
-};
+import { categoryDots, formatDate, formatDateGroup } from '@/lib/constants';
 
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-}
 
-function formatDateGroup(iso: string) {
-  const d = new Date(iso);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (d.toDateString() === today.toDateString()) return 'Today';
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-}
 
 export default function GroupExpenseList({
   initialExpenses,
@@ -136,6 +113,7 @@ export default function GroupExpenseList({
         <h3 className="text-lg font-semibold text-text-heading">Expenses</h3>
         <button
           onClick={() => setShowForm(true)}
+          data-walkthrough="add-expense"
           className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark active:bg-primary-active"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

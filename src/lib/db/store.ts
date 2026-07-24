@@ -427,17 +427,6 @@ export async function getGroupExpenses(
   return (data ?? []).map((e) => toExpense(e as Record<string, unknown>));
 }
 
-export async function getExpense(id: string): Promise<Expense | null> {
-  const { data, error } = await supabase
-    .from('expenses')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle();
-
-  if (error) throw new Error(`Failed to get expense: ${error.message}`);
-  return data ? toExpense(data as Record<string, unknown>) : null;
-}
-
 // ---------------------------------------------------------------------------
 // Expense Splits
 // ---------------------------------------------------------------------------

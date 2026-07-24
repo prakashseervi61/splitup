@@ -1,9 +1,11 @@
+import { Suspense } from 'react';
 import { getSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
 import { listUserGroups, getGroupMembers, findUserById } from '@/lib/db/store';
 import DashboardClient from '@/components/groups/DashboardClient';
+import DashboardSkeleton from '@/components/groups/DashboardSkeleton';
 
-export default async function DashboardPage() {
+async function DashboardContent() {
   const session = await getSession();
   if (!session) redirect('/login');
 
@@ -26,5 +28,13 @@ export default async function DashboardPage() {
       onboardingCompleted={user.onboarding_completed ?? false}
       groups={groupsWithMembers}
     />
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   );
 }

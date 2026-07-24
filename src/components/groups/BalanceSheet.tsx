@@ -89,23 +89,27 @@ export default function BalanceSheet({
             return (
               <div
                 key={m.user_id}
-                className={`flex items-center justify-between rounded-xl border bg-surface px-4 py-3 transition-colors ${
-                  isPositive
-                    ? "border-l-green-500 border-l-4 border-border"
-                    : isNegative
-                      ? "border-l-red-400 border-l-4 border-border"
-                      : "border-border"
-                }`}
+                className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 transition-colors"
               >
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-subtle text-xs font-bold text-primary">
                     {name.charAt(0).toUpperCase()}
                   </span>
                   <span className="text-sm font-medium text-text-body">{name}</span>
+                  {isPositive && (
+                    <svg className="ml-1 h-3.5 w-3.5 flex-shrink-0" style={{ color: "var(--color-success)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-label="gets money back">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                  )}
+                  {isNegative && (
+                    <svg className="ml-1 h-3.5 w-3.5 flex-shrink-0" style={{ color: "var(--color-danger)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-label="owes money">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  )}
                 </div>
                 <span
                   className="text-sm font-semibold tabular-nums"
-                  style={isPositive ? { color: "#15803D" } : isNegative ? { color: "#B91C1C" } : { color: "#9CA3AF" }}
+                  style={isPositive ? { color: "var(--color-success)" } : isNegative ? { color: "var(--color-danger)" } : { color: "var(--color-text-muted)" }}
                 >
                   {isPositive ? "+" : isNegative ? "" : ""}₹{Math.abs(bal).toFixed(2)}
                   {isSettled ? " (settled)" : ""}
@@ -145,7 +149,7 @@ export default function BalanceSheet({
                       <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-red-50 text-[10px] font-bold text-danger">
                         {fromName.charAt(0).toUpperCase()}
                       </span>
-                      <svg className="h-4 w-4 flex-shrink-0 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="h-4 w-4 flex-shrink-0 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                       </svg>
                       <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-green-50 text-[10px] font-bold text-success">

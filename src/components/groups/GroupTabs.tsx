@@ -59,6 +59,7 @@ interface GroupTabsProps {
   members: GroupMember[];
   userId: string;
   onRefresh: () => void;
+  refreshing?: boolean;
 }
 
 export default function GroupTabs({
@@ -70,22 +71,26 @@ export default function GroupTabs({
   members,
   userId,
   onRefresh,
+  refreshing = false,
 }: GroupTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
 
   return (
     <>
       <div className="mb-6 flex items-end justify-between border-b border-border">
-        <div className="flex gap-6">
+        <div className="flex gap-6" role="tablist" style={{ overflowX: "auto", scrollbarWidth: "none" as const }}>
           {tabs.map((tab) => (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`border-b-2 pb-3 pt-2 text-sm font-medium transition-colors ${
                 activeTab === tab.key
                   ? 'border-primary text-primary'
                   : 'border-transparent text-text-muted hover:text-text-body'
               }`}
+              style={{ whiteSpace: 'nowrap' }}
             >
               {tab.label}
             </button>
@@ -114,7 +119,7 @@ export default function GroupTabs({
           <BalanceSheet
             balances={balances}
             simplified={simplified}
-            loading={false}
+            loading={refreshing}
             error=""
             groupId={groupId}
             members={members}
@@ -125,7 +130,7 @@ export default function GroupTabs({
         {activeTab === 'settlements' && (
           <SettlementList
             settlements={settlements}
-            loading={false}
+            loading={refreshing}
             error=""
             groupId={groupId}
             onRefresh={onRefresh}
