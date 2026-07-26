@@ -86,7 +86,6 @@ function LoginPageInner() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [exists, setExists] = useState<boolean | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -112,7 +111,6 @@ function LoginPageInner() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || data.message || "Failed to send OTP");
-        setExists(data.exists);
         setOtp(["", "", "", "", "", ""]);
         setResendCooldown(30);
         setStep("otp");

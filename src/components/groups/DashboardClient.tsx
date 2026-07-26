@@ -26,14 +26,10 @@ export default function DashboardClient({
   const [showWalkthrough, setShowWalkthrough] = useState(false);
 
   useEffect(() => {
-    if (onboardingCompleted) return;
-
+    if (onboardingCompleted || groups.length > 0) return;
     const createDone = localStorage.getItem(STORAGE_KEYS.WALKTHROUGH_CREATE_DONE) === 'true';
-    const hasGroups = groups.length > 0;
-
-    if (!createDone && !hasGroups) {
-      setShowWalkthrough(true);
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing with localStorage (external system)
+    if (!createDone) setShowWalkthrough(true);
   }, [onboardingCompleted, groups.length]);
 
   return (

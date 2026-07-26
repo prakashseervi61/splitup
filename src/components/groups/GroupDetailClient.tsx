@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useOptimistic, startTransition } from 'react';
+import { useState, useEffect, useOptimistic } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/user-context';
@@ -73,7 +73,6 @@ export default function GroupDetailClient({
   simplified,
   settlements,
   userId,
-  userName,
 }: GroupDetailClientProps & { userName?: string }) {
   const router = useRouter();
   const { getUserName, getUserVpa, cacheUsers } = useUser();
@@ -93,7 +92,6 @@ export default function GroupDetailClient({
   const [renameValue, setRenameValue] = useState(group.name);
   const [renameError, setRenameError] = useState('');
   const [deleteError, setDeleteError] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [optimisticName, setOptimisticName] = useOptimistic(
@@ -330,7 +328,6 @@ export default function GroupDetailClient({
         members={members}
         userId={userId}
         onRefresh={refreshData}
-        refreshing={refreshing}
       />
 
       {/* Settle Flow Modal */}

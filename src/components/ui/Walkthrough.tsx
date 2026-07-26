@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
 import { STORAGE_KEYS } from "@/lib/constants";
 
 interface StepConfig {
@@ -34,10 +33,7 @@ const STEPS: StepConfig[] = [
   },
 ];
 
-const TOTAL_PHASE_STEPS = 3;
 const DESKTOP_BREAKPOINT = 768;
-const OVERLAY_Z = 9999;
-const TOOLTIP_ESTIMATED_HEIGHT = 220;
 
 function getPhaseSteps() {
   return [0, 1, 2, 6];
@@ -53,11 +49,14 @@ interface Rect {
   width: number;
   height: number;
 }
+
 function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReduced] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
     const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
@@ -120,36 +119,32 @@ function getSpotlightPath(cutout: Rect | null, vp: { w: number; h: number }): st
     )
   );
 }
+
 export default function Walkthrough({
-  userId: _userId,
-  userName: _userName,
   onComplete,
 }: {
   userId?: string;
   userName?: string;
   onComplete?: () => void;
 } = {}) {
-  const phase = "create-group";
-  const router = useRouter();
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
-  const [mounted, setMounted] = useState(false);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
   const [vp, setVp] = useState({ w: 0, h: 0 });
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const stepIndices = getPhaseSteps();
-  const totalSteps = getTotalTourSteps();
+  const stepIndices = useMemo(() => getPhaseSteps(), []);
+  const totalSteps = useMemo(() => getTotalTourSteps(), []);
   const effectiveStep = step >= stepIndices.length ? 0 : step;
 
-  useEffect(() => { setMounted(true); }, []);
-
-
-  const isCompletionStep = effectiveStep === stepIndices.length - 1;
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   const updateDimensions = useCallback(() => {
     setVp({ w: window.innerWidth, h: window.innerHeight });
     const rawCfg = STEPS[stepIndices[effectiveStep]];
-  const cfg = rawCfg;
+    const cfg = rawCfg;
     if (cfg.target) {
       const el = document.querySelector(cfg.target);
       if (el) setTargetRect(el.getBoundingClientRect().toJSON() as Rect);
@@ -157,9 +152,10 @@ export default function Walkthrough({
     } else {
       setTargetRect(null);
     }
-  }, [step, phase]);
+  }, [effectiveStep, stepIndices]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads DOM and viewport dimensions
     updateDimensions();
     window.addEventListener("resize", updateDimensions);
     return () => window.removeEventListener("resize", updateDimensions);
@@ -172,7 +168,7 @@ export default function Walkthrough({
       const vpCenter = vp.h / 2 + scrollY;
       const offset = targetCenter - vpCenter;
       if (Math.abs(offset) > 80) {
-        window.scrollBy({ top: offset, behavior: reduced ? "instant" as any : "smooth" });
+        window.scrollBy({ top: offset, behavior: reduced ? ("instant" as ScrollBehavior) : "smooth" });
       }
     }
   }, [targetRect, reduced, vp]);
@@ -199,7 +195,6 @@ export default function Walkthrough({
   }, [onComplete]);
 
   if (!mounted) return null;
-  // If step is out of range for this phase, reset
   const spotlightPath = getSpotlightPath(targetRect, vp);
   const isMobile = isMobileViewport(vp.w);
   const cfg = STEPS[stepIndices[effectiveStep]];
@@ -239,7 +234,6 @@ export default function Walkthrough({
       {/* Desktop tooltip card */}
       {!isMobile && (
         <DesktopTooltip
-          step={step}
           isFirst={isFirst}
           isLast={isLast}
           tourProgress={tourProgress}
@@ -257,7 +251,6 @@ export default function Walkthrough({
       {/* Mobile bottom sheet */}
       {isMobile && (
         <MobileBottomSheet
-          step={step}
           isFirst={isFirst}
           isLast={isLast}
           tourProgress={tourProgress}
@@ -273,10 +266,11 @@ export default function Walkthrough({
     document.body
   );
 }
+
 function DesktopTooltip({
-  step, isFirst, isLast, tourProgress, tourIndex, totalSteps, targetRect, vp, cfg, onNext, onSkip, reduced
+  isFirst, isLast, tourProgress, tourIndex, totalSteps, targetRect, vp, cfg, onNext, onSkip, reduced
 }: {
-  step: number; isFirst: boolean; isLast: boolean;
+  isFirst: boolean; isLast: boolean;
   tourProgress: number; tourIndex: number;
   totalSteps: number;
   targetRect: Rect | null; vp: { w: number; h: number };
@@ -286,7 +280,6 @@ function DesktopTooltip({
 }) {
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // Position tooltip relative to target
   const [pos, setPos] = useState({ left: 0, top: 0, arrow: "" });
   useEffect(() => {
     if (!tooltipRef.current) return;
@@ -384,12 +377,10 @@ function DesktopTooltip({
                 key={i}
                 className="rounded-full transition-all duration-300"
                 style={{
-                  width: i < tourIndex ? 24 : 6,
+                  width: i < tourProgress ? 24 : 6,
                   height: 6,
-                  backgroundColor: i < tourIndex
-                    ? "var(--color-primary)"
-                    : "var(--color-primary)",
-                  opacity: i < tourIndex ? 1 : 0.3,
+                  backgroundColor: "var(--color-primary)",
+                  opacity: i < tourProgress ? 1 : 0.3,
                 }}
               />
             ))}
@@ -417,10 +408,11 @@ function DesktopTooltip({
     </div>
   );
 }
+
 function MobileBottomSheet({
-  step, isFirst, isLast, tourProgress, tourIndex, totalSteps, cfg, onNext, onSkip, reduced
+  isFirst, isLast, tourProgress, tourIndex, totalSteps, cfg, onNext, onSkip, reduced
 }: {
-  step: number; isFirst: boolean; isLast: boolean;
+  isFirst: boolean; isLast: boolean;
   tourProgress: number; tourIndex: number;
   totalSteps: number;
   cfg: StepConfig;
@@ -441,7 +433,7 @@ function MobileBottomSheet({
         pointerEvents: "auto",
         transform: visible ? "translateY(0%)" : "translateY(100%)",
         transitionTimingFunction: "cubic-bezier(0.32, 0.72, 0, 1)",
-        transitionProperty: reduced ? "none" as any : "transform",
+        transitionProperty: reduced ? "none" : "transform",
       }}
     >
       <div className="bg-white rounded-t-2xl shadow-2xl px-6 pt-5 pb-9">
@@ -468,12 +460,10 @@ function MobileBottomSheet({
                 key={i}
                 className="rounded-full transition-all duration-300"
                 style={{
-                  width: i < tourIndex ? 24 : 6,
+                  width: i < tourProgress ? 24 : 6,
                   height: 6,
-                  backgroundColor: i < tourIndex
-                    ? "var(--color-primary)"
-                    : "var(--color-primary)",
-                  opacity: i < tourIndex ? 1 : 0.3,
+                  backgroundColor: "var(--color-primary)",
+                  opacity: i < tourProgress ? 1 : 0.3,
                 }}
               />
             ))}

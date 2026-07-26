@@ -9,7 +9,8 @@ function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 }
 
-export default function NavBar({ user: initialUser }: { user: User | null }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- prop required by caller
+export default function NavBar({ user: _user }: { user: User | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const isLanding = pathname === '/';
