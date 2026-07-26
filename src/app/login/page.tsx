@@ -296,7 +296,7 @@ function LoginPageInner() {
         {/* ── Right Panel ── */}
         <div className="flex w-full flex-col items-center justify-center px-6 py-12 sm:px-10 lg:py-16" style={{ width: "var(--right-panel-w, 100%)" }}>
           {/* Mobile header */}
-          <div className="mb-10 flex flex-col items-center gap-3" style={{ display: "var(--mobile-header-display, flex)" }}>
+          <div className="mb-6 flex flex-col items-center gap-3" style={{ display: "var(--mobile-header-display, flex)" }}>
             <div className="flex items-center gap-2.5">
               <SplitArrowIcon size={28} color="#1A6B4C" />
               <span className="font-display text-2xl font-bold text-heading" style={{ fontFamily: "Outfit" }}>Splitup</span>
@@ -304,11 +304,13 @@ function LoginPageInner() {
             <p className="text-center text-sm text-text-muted">Split fairly. Settle instantly.</p>
           </div>
 
-          {/* Desktop header */}
-          <div className="mb-8 w-full max-w-sm" style={{ display: "var(--desktop-header-display, none)" }}>
+          {/* Form heading */}
+          <div className="mb-8 w-full max-w-sm">
             <h2 className="font-display text-2xl font-bold text-heading" style={{ fontFamily: "Outfit" }}>Get started</h2>
             <p className="mt-1.5 text-sm text-text-muted">Enter your phone number to continue</p>
           </div>
+
+
 
           {/* Form card */}
           <div className="w-full max-w-sm">
