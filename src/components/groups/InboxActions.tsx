@@ -159,14 +159,14 @@ export default function InboxActions({ received, sent, groups }: InboxActionsPro
                       <button
                         onClick={() => handleAction(invite.id, 'accept')}
                         disabled={actionLoading === invite.id}
-                        className="rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {actionLoading === invite.id ? 'Accepting...' : 'Accept'}
                       </button>
                       <button
                         onClick={() => handleAction(invite.id, 'reject')}
                         disabled={actionLoading === invite.id}
-                        className="rounded-lg border border-border px-4 py-1.5 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg border border-border px-4 py-2.5 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Reject
                       </button>
@@ -246,7 +246,7 @@ export default function InboxActions({ received, sent, groups }: InboxActionsPro
               <button
                 onClick={handleSendInvite}
                 disabled={sendingInvite || !invitePhone || invitePhone.length !== 10 || !selectedGroup}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {sendingInvite ? 'Sending...' : 'Send Invite'}
               </button>

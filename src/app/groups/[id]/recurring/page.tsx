@@ -183,13 +183,13 @@ export default function RecurringPage() {
                 <button
                   onClick={() => handleTrigger(t.id)}
                   disabled={triggering === t.id || !t.is_active}
-                  className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-40"
+                  className="rounded-lg bg-primary px-3 py-2.5 text-xs font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-40"
                 >
                   {triggering === t.id ? '...' : 'Trigger Now'}
                 </button>
                 <button
                   onClick={() => toggleActive(t)}
-                  className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                  className={`rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${
                     t.is_active
                       ? 'border-border text-text-body hover:bg-surface-secondary'
                       : 'border-success/30 text-success hover:bg-green-50'
@@ -199,7 +199,7 @@ export default function RecurringPage() {
                 </button>
                 <button
                   onClick={() => handleDelete(t.id)}
-                  className="ml-auto rounded-lg border border-border px-3 py-2 text-xs font-medium text-text-muted transition-colors hover:border-red-200 hover:text-danger"
+                  className="ml-auto rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-text-muted transition-colors hover:border-red-200 hover:text-danger"
                 >
                   Delete
                 </button>

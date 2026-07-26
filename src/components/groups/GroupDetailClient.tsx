@@ -7,8 +7,6 @@ import { useUser } from '@/lib/user-context';
 import GroupTabs from './GroupTabs';
 import InviteMemberModal from './InviteMemberModal';
 import SettleFlow from '@/components/settlements/SettleFlow';
-import Walkthrough from '@/components/ui/Walkthrough';
-import { STORAGE_KEYS } from '@/lib/constants';
 
 interface ExpenseSplit {
   user_id: string;
@@ -89,7 +87,6 @@ export default function GroupDetailClient({
   const [currentSimplified, setCurrentSimplified] = useState(simplified);
   const [currentSettlements, setCurrentSettlements] = useState(settlements);
 
-  const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showRename, setShowRename] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -122,14 +119,7 @@ export default function GroupDetailClient({
     }
   }, [users, cacheUsers]);
 
-  // Phase 2 walkthrough: show after creating first group
-  useEffect(() => {
-    const createDone = localStorage.getItem(STORAGE_KEYS.WALKTHROUGH_CREATE_DONE) === 'true';
-    const onboardingDone = localStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED) === 'true';
-    if (createDone && !onboardingDone) {
-      setShowWalkthrough(true);
-    }
-  }, []);
+
 
   const refreshData = async () => {
     const [balRes, settRes] = await Promise.all([
@@ -205,7 +195,7 @@ export default function GroupDetailClient({
         href="/dashboard"
         className="mb-4 inline-flex items-center gap-1 py-2 text-sm text-text-muted hover:text-text-body"
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
         Dashboard
@@ -222,6 +212,8 @@ export default function GroupDetailClient({
             <button
               onClick={() => setShowMenu(!showMenu)}
               className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-secondary hover:text-text-body"
+              aria-label="Group options"
+              aria-expanded={showMenu}
             >
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -275,7 +267,7 @@ export default function GroupDetailClient({
             onClick={() => setShowInvite(true)}
             className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1 text-xs font-medium text-text-muted transition-colors hover:border-primary hover:text-primary"
           >
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Invite
@@ -438,14 +430,7 @@ export default function GroupDetailClient({
         <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
       )}
 
-      {showWalkthrough && (
-        <Walkthrough
-          userId={userId}
-          userName={userName}
-          phase="use-features"
-          onComplete={() => setShowWalkthrough(false)}
-        />
-      )}
+
     </div>
   );
 }

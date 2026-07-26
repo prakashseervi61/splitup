@@ -20,7 +20,7 @@ function Spinner({ className = "h-4 w-4" }: { className?: string }) {
 
 function LockIcon() {
   return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="11" width="18" height="11" rx="2" />
       <path d="M7 11V7a5 5 0 0110 0v4" />
     </svg>
@@ -29,7 +29,7 @@ function LockIcon() {
 
 function FloatingIllustration() {
   return (
-    <svg viewBox="0 0 400 320" fill="none" className="w-full max-w-[340px] h-auto anim-float">
+    <svg viewBox="0 0 400 320" fill="none" className="w-full max-w-[340px] h-auto anim-float" aria-hidden="true">
       <rect x="80" y="200" width="240" height="12" rx="6" fill="#E8F3EE" stroke="#1A6B4C" strokeWidth="1.5" />
       <rect x="110" y="212" width="8" height="50" rx="2" fill="#E8F3EE" stroke="#1A6B4C" strokeWidth="1.2" />
       <rect x="282" y="212" width="8" height="50" rx="2" fill="#E8F3EE" stroke="#1A6B4C" strokeWidth="1.2" />
@@ -236,9 +236,9 @@ function LoginPageInner() {
   );
 
   const stepHeights: Record<Step, string> = {
-    phone: "max-h-[280px]",
-    otp: "max-h-[340px]",
-    name: "max-h-[280px]",
+    phone: "280px",
+    otp: "340px",
+    name: "280px",
   };
 
   return (
@@ -320,7 +320,7 @@ function LoginPageInner() {
             )}
 
             {/* ── Step: Phone ── */}
-            <div className={`overflow-hidden transition-all duration-300 ${step === "phone" ? `${stepHeights.phone} opacity-100` : "max-h-0 opacity-0"}`}>
+            <div className={`overflow-hidden transition-all duration-300 ${step === "phone" ? "opacity-100" : "max-h-0 opacity-0"}`} style={{ maxHeight: step === "phone" ? stepHeights.phone : 0 }}>
               <form onSubmit={handleSendOtp} className="space-y-5">
                 <div>
                   <label htmlFor="phone" className="mb-2 block text-sm font-medium text-heading">Phone number</label>
@@ -358,7 +358,7 @@ function LoginPageInner() {
             </div>
 
             {/* ── Step: OTP ── */}
-            <div className={`overflow-hidden transition-all duration-300 ${step === "otp" ? `${stepHeights.otp} opacity-100` : "max-h-0 opacity-0"}`}>
+            <div className={`overflow-hidden transition-all duration-300 ${step === "otp" ? "opacity-100" : "max-h-0 opacity-0"}`} style={{ maxHeight: step === "otp" ? stepHeights.otp : 0 }}>
               <form onSubmit={handleVerifyOtp} className="space-y-5">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-heading">Enter the 6-digit code</label>
@@ -417,7 +417,7 @@ function LoginPageInner() {
             </div>
 
             {/* ── Step: Name ── */}
-            <div className={`overflow-hidden transition-all duration-300 ${step === "name" ? `${stepHeights.name} opacity-100` : "max-h-0 opacity-0"}`}>
+            <div className={`overflow-hidden transition-all duration-300 ${step === "name" ? "opacity-100" : "max-h-0 opacity-0"}`} style={{ maxHeight: step === "name" ? stepHeights.name : 0 }}>
               <form onSubmit={handleCreateProfile} className="space-y-5">
                 <div>
                   <label htmlFor="name" className="mb-2 block text-sm font-medium text-heading">Your name</label>

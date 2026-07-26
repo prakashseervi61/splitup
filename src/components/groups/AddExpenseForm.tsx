@@ -220,7 +220,7 @@ export default function AddExpenseForm({
                 key={m}
                 type="button"
                 onClick={() => setSplitMethod(m)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${
                   splitMethod === m
                     ? 'border-primary bg-primary-subtle text-primary'
                     : 'border-border text-text-body hover:border-divider'
@@ -301,14 +301,14 @@ export default function AddExpenseForm({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-body transition-colors hover:bg-surface-secondary"
+            className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-text-body transition-colors hover:bg-surface-secondary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
+            className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
           >
             {submitting ? 'Adding...' : 'Add Expense'}
           </button>

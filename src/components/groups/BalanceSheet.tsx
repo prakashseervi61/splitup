@@ -76,7 +76,7 @@ export default function BalanceSheet({
     <div className="space-y-6">
       {/* Net Balances ledger */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-text-muted">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-text-muted" data-walkthrough="balances">
           Net Balances
         </h3>
         <div className="space-y-1">
@@ -171,7 +171,7 @@ export default function BalanceSheet({
                             amount: debt.amount,
                           })
                         }
-                        className="rounded-lg bg-primary px-3 py-2.5 text-xs font-medium text-white transition-colors hover:bg-primary-dark active:bg-primary-active"
+                        className="rounded-lg bg-primary px-3 py-3 text-xs font-medium text-white transition-colors hover:bg-primary-dark active:bg-primary-active"
                       >
                         Settle Up
                       </button>

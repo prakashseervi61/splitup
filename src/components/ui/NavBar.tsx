@@ -181,7 +181,7 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
         {hydrated && user && (
           <div
             ref={menuRef}
-            className={`absolute left-0 top-14 w-full overflow-hidden border-b border-border bg-white shadow-lg transition-all duration-[250ms] ease-in-out md:hidden ${
+            className={`absolute left-0 top-14 w-full overflow-hidden border-b border-border bg-white shadow-lg transition-all ease-in-out md:hidden ${
               menuOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 border-b-0'
             }`}
           >
@@ -226,7 +226,7 @@ export default function NavBar({ user: initialUser }: { user: User | null }) {
         {hydrated && isLanding && !user && (
           <div
             ref={menuRef}
-            className={`absolute left-0 top-14 w-full overflow-hidden border-b border-border bg-white shadow-lg transition-all duration-[250ms] ease-in-out md:hidden ${
+            className={`absolute left-0 top-14 w-full overflow-hidden border-b border-border bg-white shadow-lg transition-all ease-in-out md:hidden ${
               menuOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 border-b-0'
             }`}
           >

@@ -51,3 +51,6 @@ next-env.d.ts
 # misc
 null
 supabase/.temp/
+
+# Local plans and docs
+docs/

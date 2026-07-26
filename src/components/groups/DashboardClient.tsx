@@ -24,7 +24,6 @@ export default function DashboardClient({
   groups,
 }: DashboardClientProps) {
   const [showWalkthrough, setShowWalkthrough] = useState(false);
-  const [walkthroughPhase, setWalkthroughPhase] = useState<'create-group' | 'use-features' | null>(null);
 
   useEffect(() => {
     if (onboardingCompleted) return;
@@ -33,10 +32,6 @@ export default function DashboardClient({
     const hasGroups = groups.length > 0;
 
     if (!createDone && !hasGroups) {
-      setWalkthroughPhase('create-group');
-      setShowWalkthrough(true);
-    } else if (createDone && hasGroups) {
-      setWalkthroughPhase('use-features');
       setShowWalkthrough(true);
     }
   }, [onboardingCompleted, groups.length]);
@@ -44,11 +39,10 @@ export default function DashboardClient({
   return (
     <>
       <GroupList groups={groups} userId={userId} />
-      {showWalkthrough && walkthroughPhase && (
+      {showWalkthrough && (
         <Walkthrough
           userId={userId}
           userName={userName}
-          phase={walkthroughPhase}
           onComplete={() => setShowWalkthrough(false)}
         />
       )}

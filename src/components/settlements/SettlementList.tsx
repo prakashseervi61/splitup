@@ -107,7 +107,7 @@ export default function SettlementList({ settlements, loading, error, groupId, o
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-[10px] font-bold text-danger">
                       {getUserName(s.from_user).charAt(0).toUpperCase()}
                     </span>
-                    <svg className="h-3 w-3 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-3 w-3 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-green-50 text-[10px] font-bold text-success">
@@ -155,13 +155,13 @@ export default function SettlementList({ settlements, loading, error, groupId, o
                               });
                               window.location.href = link;
                             }}
-                            className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-dark"
+                            className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-xs font-medium text-white transition-colors hover:bg-primary-dark"
                           >
                             Pay via UPI
                           </button>
                           <button
                             onClick={() => setQrSettlement(qrSettlement === s.id ? null : s.id)}
-                            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary"
+                            className="rounded-lg border border-border px-3 py-2.5 text-xs font-medium text-text-body transition-colors hover:bg-surface-secondary"
                           >
                             {qrSettlement === s.id ? "Hide QR" : "QR"}
                           </button>
@@ -190,14 +190,14 @@ export default function SettlementList({ settlements, loading, error, groupId, o
                     <button
                       onClick={() => updateStatus(s.id, "confirmed")}
                       disabled={actionLoading === s.id}
-                      className="flex-1 rounded-lg bg-success px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                      className="flex-1 rounded-lg bg-success px-3 py-2.5 text-xs font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                     >
                       {actionLoading === s.id ? "..." : "Confirm"}
                     </button>
                     <button
                       onClick={() => updateStatus(s.id, "disputed")}
                       disabled={actionLoading === s.id}
-                      className="flex-1 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-red-50 disabled:opacity-50"
+                      className="flex-1 rounded-lg border border-red-200 px-3 py-2.5 text-xs font-medium text-danger transition-colors hover:bg-red-50 disabled:opacity-50"
                     >
                       Dispute
                     </button>

@@ -29,43 +29,21 @@ const STEPS: StepConfig[] = [
     target: "[data-walkthrough='create-group']",
   },
   {
-    headline: "Add an Expense",
-    description:
-      "Every time someone pays for the group, log it here. Splitup calculates who owes what automatically.",
-    target: "[data-walkthrough='add-expense']",
-  },
-  {
-    headline: "Balances",
-    description:
-      "This is your live balance --- who owes you and how much, always up to date.",
-    target: "[data-walkthrough='balances']",
-  },
-  {
-    headline: "Settle Up",
-    description:
-      "Tap Settle Now and your UPI app opens pre-filled with the exact amount. One tap to clear the debt.",
-    target: "[data-walkthrough='settle-now']",
-  },
-  {
     headline: "You're all set!",
-    description: "Create your first group to get started.",
+    description: "You're ready to start splitting expenses with your group.",
   },
 ];
 
-// Phase 1: create-group (steps 0, 1, 2, 6) --- shown before any group exists
-// Phase 2: use-features (steps 3, 4, 5, 6) --- shown after creating first group
 const TOTAL_PHASE_STEPS = 3;
 const DESKTOP_BREAKPOINT = 768;
 const OVERLAY_Z = 9999;
 const TOOLTIP_ESTIMATED_HEIGHT = 220;
 
-function getPhaseSteps(phase: string) {
-  if (phase === "use-features") return [3, 4, 5, 6];
-  return [0, 1, 2, 6]; // create-group
+function getPhaseSteps() {
+  return [0, 1, 2, 6];
 }
 
-function getTotalTourSteps(phase: string) {
-  if (phase === "use-features") return 3;
+function getTotalTourSteps() {
   return 2;
 }
 
@@ -146,13 +124,12 @@ export default function Walkthrough({
   userId: _userId,
   userName: _userName,
   onComplete,
-  phase = "create-group",
 }: {
   userId?: string;
   userName?: string;
   onComplete?: () => void;
-  phase?: "create-group" | "use-features";
 } = {}) {
+  const phase = "create-group";
   const router = useRouter();
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
@@ -160,20 +137,19 @@ export default function Walkthrough({
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
   const [vp, setVp] = useState({ w: 0, h: 0 });
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const stepIndices = getPhaseSteps(phase);
-  const totalSteps = getTotalTourSteps(phase);
+  const stepIndices = getPhaseSteps();
+  const totalSteps = getTotalTourSteps();
   const effectiveStep = step >= stepIndices.length ? 0 : step;
 
   useEffect(() => { setMounted(true); }, []);
+
 
   const isCompletionStep = effectiveStep === stepIndices.length - 1;
 
   const updateDimensions = useCallback(() => {
     setVp({ w: window.innerWidth, h: window.innerHeight });
     const rawCfg = STEPS[stepIndices[effectiveStep]];
-  const cfg: StepConfig = isCompletionStep && phase === "use-features"
-    ? { ...rawCfg, description: "Start adding expenses and invite roommates to get going." }
-    : rawCfg;
+  const cfg = rawCfg;
     if (cfg.target) {
       const el = document.querySelector(cfg.target);
       if (el) setTargetRect(el.getBoundingClientRect().toJSON() as Rect);
@@ -208,25 +184,19 @@ export default function Walkthrough({
 
   const handleNext = useCallback(() => {
     if (isLast) {
-      if (phase === "create-group") {
-        localStorage.setItem(STORAGE_KEYS.WALKTHROUGH_CREATE_DONE, "true");
-      } else {
-        localStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, "true");
-      }
+      localStorage.setItem(STORAGE_KEYS.WALKTHROUGH_CREATE_DONE, "true");
+      fetch("/api/onboarding", { method: "PATCH" }).catch(() => {});
       onComplete?.();
     } else {
       setStep((s) => s + 1);
     }
-  }, [isLast, phase, onComplete]);
+  }, [isLast, onComplete]);
 
   const handleSkip = useCallback(() => {
-    if (phase === "create-group") {
-      localStorage.setItem(STORAGE_KEYS.WALKTHROUGH_CREATE_DONE, "true");
-    } else {
-      localStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, "true");
-    }
+    localStorage.setItem(STORAGE_KEYS.WALKTHROUGH_CREATE_DONE, "true");
+    fetch("/api/onboarding", { method: "PATCH" }).catch(() => {});
     onComplete?.();
-  }, [phase, onComplete]);
+  }, [onComplete]);
 
   if (!mounted) return null;
   // If step is out of range for this phase, reset

@@ -117,7 +117,7 @@ export default function CreateGroupForm({ open, onClose, userId }: CreateGroupFo
                 key={t}
                 type="button"
                 onClick={() => setType(t)}
-                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium capitalize transition-colors ${
+                className={`flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium capitalize transition-colors ${
                   type === t
                     ? "border-primary bg-primary-subtle text-primary"
                     : "border-border text-text-body hover:border-divider"
@@ -164,7 +164,7 @@ export default function CreateGroupForm({ open, onClose, userId }: CreateGroupFo
               type="button"
               onClick={addMember}
               disabled={!newMemberName.trim()}
-              className="rounded-lg border border-border px-3 py-2 text-sm text-text-body transition-colors hover:bg-surface-secondary disabled:opacity-40"
+              className="rounded-lg border border-border px-3 py-2.5 text-sm text-text-body transition-colors hover:bg-surface-secondary disabled:opacity-40"
             >
               Add
             </button>
@@ -179,14 +179,14 @@ export default function CreateGroupForm({ open, onClose, userId }: CreateGroupFo
           <button
             type="button"
             onClick={() => { reset(); onClose(); }}
-            className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-body transition-colors hover:bg-surface-secondary"
+            className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-text-body transition-colors hover:bg-surface-secondary"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
+            className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
           >
             {submitting ? "Creating..." : "Create Group"}
           </button>

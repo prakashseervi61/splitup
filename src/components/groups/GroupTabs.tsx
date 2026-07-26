@@ -82,14 +82,17 @@ export default function GroupTabs({
           {tabs.map((tab) => (
             <button
               key={tab.key}
+              id={`tab-${tab.key}`}
               role="tab"
               aria-selected={activeTab === tab.key}
+              aria-controls={`panel-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
               className={`border-b-2 pb-3 pt-2 text-sm font-medium transition-colors ${
                 activeTab === tab.key
                   ? 'border-primary text-primary'
                   : 'border-transparent text-text-muted hover:text-text-body'
               }`}
+              tabIndex={activeTab === tab.key ? 0 : -1}
               style={{ whiteSpace: 'nowrap' }}
             >
               {tab.label}
@@ -106,6 +109,7 @@ export default function GroupTabs({
 
       <div>
         {activeTab === 'expenses' && (
+          <div id="panel-expenses" role="tabpanel" aria-labelledby="tab-expenses">
           <GroupExpenseList
             initialExpenses={expenses}
             groupId={groupId}
@@ -113,9 +117,11 @@ export default function GroupTabs({
             userId={userId}
             onRefresh={onRefresh}
           />
+          </div>
         )}
 
         {activeTab === 'balances' && (
+          <div id="panel-balances" role="tabpanel" aria-labelledby="tab-balances">
           <BalanceSheet
             balances={balances}
             simplified={simplified}
@@ -125,9 +131,11 @@ export default function GroupTabs({
             members={members}
             onRefresh={onRefresh}
           />
+          </div>
         )}
 
         {activeTab === 'settlements' && (
+          <div id="panel-settlements" role="tabpanel" aria-labelledby="tab-settlements">
           <SettlementList
             settlements={settlements}
             loading={refreshing}
@@ -135,6 +143,7 @@ export default function GroupTabs({
             groupId={groupId}
             onRefresh={onRefresh}
           />
+          </div>
         )}
       </div>
     </>
