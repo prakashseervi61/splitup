@@ -11,7 +11,6 @@
 ![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=flat-square&logo=supabase&logoColor=white)
 
 [![CI](https://github.com/prakashseervi61/splitup/actions/workflows/ci.yml/badge.svg)](https://github.com/prakashseervi61/splitup/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <br/>
 
@@ -333,14 +332,12 @@ Please ensure:
 
 ## Author
 
-**Prakash Seervi** — [GitHub](https://github.com/prakashseervi61)
+**Prakash V** — [GitHub](https://github.com/prakashseervi61)
 
 ---
 
 <div align="center">
 
 **Built for Indian PGs, hostels, and shared flats.**
-
-SplitUP is open source under the [MIT License](LICENSE).
 
 </div>
