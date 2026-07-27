@@ -5,6 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { User } from '@/types';
 
+function triggerShortcutHelp() {
+  window.dispatchEvent(new CustomEvent('shortcut:show-help'));
+}
+
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 }
@@ -116,6 +120,14 @@ export default function NavBar({ user: _user }: { user: User | null }) {
               >
                 Profile
               </Link>
+              <button
+                onClick={triggerShortcutHelp}
+                className="rounded-lg px-3 py-2.5 text-xs font-medium text-text-muted transition-colors hover:bg-surface-secondary hover:text-text-body"
+                aria-label="Keyboard shortcuts"
+                title="Keyboard shortcuts"
+              >
+                ?
+              </button>
               <button
                 onClick={handleLogout}
                 className="rounded-lg border border-border px-3 py-2.5 text-sm text-text-body transition-colors hover:bg-surface-secondary hover:text-text-heading"

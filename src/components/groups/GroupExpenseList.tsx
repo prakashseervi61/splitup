@@ -44,6 +44,12 @@ export default function GroupExpenseList({
 }: GroupExpenseListProps) {
   const { getUserName } = useUser();
   const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setShowForm(true);
+    window.addEventListener('shortcut:add-expense', handler);
+    return () => window.removeEventListener('shortcut:add-expense', handler);
+  }, []);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialExpenses.length >= 20);

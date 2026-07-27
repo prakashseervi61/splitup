@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import GroupCard from './GroupCard';
 import CreateGroupForm from './CreateGroupForm';
 
@@ -22,6 +22,12 @@ interface GroupListProps {
 
 export default function GroupList({ groups, userId }: GroupListProps) {
   const [showCreate, setShowCreate] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setShowCreate(true);
+    window.addEventListener('shortcut:new-group', handler);
+    return () => window.removeEventListener('shortcut:new-group', handler);
+  }, []);
 
   return (
     <div className="flex min-h-full flex-col">
